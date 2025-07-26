@@ -1,0 +1,211 @@
+// packages/database/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User and authentication
+model User {
+  id               String      @id @default(cuid())
+  email            String      @unique
+  profile          Profile?
+  attempts         Attempt[]
+  achievements     UserAchievement[]
+  questSessions    QuestSession[]
+  streakData       StreakData?
+  subscriptions    Subscription[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([email])
+}
+
+model Profile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username        String?   @unique
+  displayName     String
+  avatarUrl       String?
+  targetExam      ExamType  @default(SAT)
+  gradeLevel      Int?
+  parentEmail     String?
+  xp              Int       @default(0)
+  currentLevel    Int       @default(1)
+  credits         Int       @default(0)
+  settings        Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([username])
+}
+
+// Question bank
+model Question {
+  id              String      @id @default(cuid())
+  content         Json        // Structured question data
+  domain          String      // SAT domain or PERT category
+  subdomain       String?     // More specific topic
+  difficulty      Float       // IRT difficulty parameter (-3 to 3)
+  discrimination  Float       @default(1.0) // IRT discrimination parameter
+  guessing        Float       @default(0.25) // IRT guessing parameter
+  tags            String[]    // Additional categorization
+  metadata        Json?       // Additional data (source, author, etc)
+  status          QuestionStatus @default(ACTIVE)
+  attempts        Attempt[]
+  generatedBy     String?     // AI model that generated it
+  reviewedBy      String?     // Admin who reviewed it
+  reviewedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([domain, difficulty])
+  @@index([status])
+}
+
+// User attempts at questions
+model Attempt {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        Question    @relation(fields: [questionId], references: [id])
+  questSessionId  String?
+  questSession    QuestSession? @relation(fields: [questSessionId], references: [id])
+  correct         Boolean
+  answer          String?     // User's answer
+  timeSpent       Int         // milliseconds
+  hintsUsed       Int         @default(0)
+  aiCoachUsed     Boolean     @default(false)
+  confidence      Int?        // 1-5 scale
+  createdAt       DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([questionId])
+  @@index([questSessionId])
+}
+
+// Quest sessions (daily challenges)
+model QuestSession {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questType       QuestType   @default(DAILY)
+  status          QuestStatus @default(IN_PROGRESS)
+  targetQuestions Int         @default(10)
+  completedQuestions Int      @default(0)
+  correctAnswers  Int         @default(0)
+  totalTimeSpent  Int         @default(0) // milliseconds
+  xpEarned        Int         @default(0)
+  bonusXp         Int         @default(0)
+  attempts        Attempt[]
+  startedAt       DateTime    @default(now())
+  completedAt     DateTime?
+
+  @@index([userId, questType, startedAt])
+}
+
+// Achievements system
+model Achievement {
+  id              String      @id @default(cuid())
+  code            String      @unique
+  name            String
+  description     String
+  iconUrl         String?
+  category        String
+  tier            Int         @default(1) // Bronze=1, Silver=2, Gold=3
+  xpReward        Int         @default(0)
+  creditReward    Int         @default(0)
+  requirements    Json        // Criteria for unlocking
+  users           UserAchievement[]
+  createdAt       DateTime    @default(now())
+}
+
+model UserAchievement {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId   String
+  achievement     Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt      DateTime    @default(now())
+  progress        Int         @default(100) // Percentage for progressive achievements
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+// Streak tracking
+model StreakData {
+  id              String      @id @default(cuid())
+  userId          String      @unique
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak   Int         @default(0)
+  longestStreak   Int         @default(0)
+  lastActivityAt  DateTime    @default(now())
+  streakFreezes   Int         @default(0)
+  updatedAt       DateTime    @updatedAt
+}
+
+// Subscriptions
+model Subscription {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan            String      // 'free', 'premium', 'school'
+  status          String      // 'active', 'cancelled', 'expired'
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  currentPeriodEnd DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// AI Coach interactions
+model CoachInteraction {
+  id              String      @id @default(cuid())
+  userId          String
+  questionId      String?
+  interactionType String      // 'hint', 'explanation', 'encouragement'
+  userMessage     String
+  coachResponse   String
+  tokensUsed      Int
+  model           String
+  createdAt       DateTime    @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// Enums
+enum ExamType {
+  SAT
+  PERT
+  BEST
+}
+
+enum QuestionStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  FLAGGED
+}
+
+enum QuestType {
+  DAILY
+  PRACTICE
+  BOSS_BATTLE
+  CUSTOM
+}
+
+enum QuestStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
