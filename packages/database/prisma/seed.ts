@@ -6,7 +6,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create sample achievements
+  // Clean existing data
+  await prisma.attempt.deleteMany();
+  await prisma.question.deleteMany();
+  await prisma.userAchievement.deleteMany();
+  await prisma.achievement.deleteMany();
+
+  // Create achievements
   const achievements = await Promise.all([
     prisma.achievement.create({
       data: {
@@ -42,10 +48,22 @@ async function main() {
         requirements: { perfectQuests: 1 },
       },
     }),
+    prisma.achievement.create({
+      data: {
+        code: 'speed_demon',
+        name: 'Speed Demon',
+        description: 'Answer 5 questions correctly in under 2 minutes each',
+        category: 'speed',
+        tier: 1,
+        xpReward: 75,
+        requirements: { fastAnswers: 5 },
+      },
+    }),
   ]);
 
-  // Create sample questions
-  const sampleQuestions = [
+  // Create comprehensive question bank
+  const questions = [
+    // ALGEBRA - Easy
     {
       content: {
         type: 'multiple-choice',
@@ -56,22 +74,52 @@ async function main() {
       },
       domain: 'Algebra',
       subdomain: 'Linear Equations',
-      difficulty: -0.5,
-      tags: ['linear-equations', 'solving-for-x'],
+      difficulty: -1.0,
+      tags: ['linear-equations', 'solving-for-x', 'basic-algebra'],
     },
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'If 3(x - 2) = 12, what is the value of x?',
+        choices: ['2', '4', '6', '8'],
+        correctAnswer: '6',
+        explanation: 'Distribute: 3x - 6 = 12. Add 6: 3x = 18. Divide by 3: x = 6.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Linear Equations',
+      difficulty: -0.8,
+      tags: ['linear-equations', 'distributive-property'],
+    },
+
+    // ALGEBRA - Medium
     {
       content: {
         type: 'multiple-choice',
         question: 'What is the slope of the line passing through points (2, 3) and (4, 7)?',
         choices: ['1', '2', '3', '4'],
         correctAnswer: '2',
-        explanation: 'Slope = (y2 - y1) / (x2 - x1) = (7 - 3) / (4 - 2) = 4 / 2 = 2',
+        explanation: 'Slope = (y₂ - y₁) / (x₂ - x₁) = (7 - 3) / (4 - 2) = 4 / 2 = 2',
       },
       domain: 'Algebra',
       subdomain: 'Linear Functions',
       difficulty: 0,
-      tags: ['slope', 'coordinate-geometry'],
+      tags: ['slope', 'coordinate-geometry', 'linear-functions'],
     },
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'If the line y = mx + 5 passes through the point (2, 9), what is the value of m?',
+        choices: ['1', '2', '3', '4'],
+        correctAnswer: '2',
+        explanation: 'Substitute the point: 9 = m(2) + 5. Solve: 9 = 2m + 5, so 4 = 2m, thus m = 2.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Linear Functions',
+      difficulty: 0.2,
+      tags: ['slope', 'point-slope', 'linear-equations'],
+    },
+
+    // ADVANCED MATH - Functions
     {
       content: {
         type: 'grid-in',
@@ -81,17 +129,128 @@ async function main() {
       },
       domain: 'Advanced Math',
       subdomain: 'Functions',
+      difficulty: 0.3,
+      tags: ['functions', 'evaluation', 'quadratics'],
+    },
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'If f(x) = 2x + 1 and g(x) = x², what is f(g(2))?',
+        choices: ['5', '7', '9', '11'],
+        correctAnswer: '9',
+        explanation: 'First find g(2) = 2² = 4. Then f(4) = 2(4) + 1 = 8 + 1 = 9.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Functions',
       difficulty: 0.5,
-      tags: ['functions', 'evaluation'],
+      tags: ['composite-functions', 'function-composition'],
+    },
+
+    // ADVANCED MATH - Quadratics
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'What are the x-intercepts of y = x² - 5x + 6?',
+        choices: ['x = 1 and x = 6', 'x = 2 and x = 3', 'x = -2 and x = -3', 'x = 0 and x = 5'],
+        correctAnswer: 'x = 2 and x = 3',
+        explanation: 'Factor: x² - 5x + 6 = (x - 2)(x - 3). Set equal to 0: x = 2 or x = 3.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Quadratic Functions',
+      difficulty: 0.4,
+      tags: ['quadratics', 'factoring', 'x-intercepts'],
+    },
+
+    // PROBLEM SOLVING & DATA ANALYSIS
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'A store offers a 20% discount on all items. If an item originally costs $80, what is the sale price?',
+        choices: ['$16', '$60', '$64', '$70'],
+        correctAnswer: '$64',
+        explanation: '20% of $80 = 0.20 × 80 = $16 discount. Sale price = $80 - $16 = $64.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: -0.5,
+      tags: ['percentages', 'discounts', 'word-problems'],
+    },
+    {
+      content: {
+        type: 'grid-in',
+        question: 'If the mean of 5 numbers is 12, and four of the numbers are 10, 11, 13, and 14, what is the fifth number?',
+        correctAnswer: '12',
+        explanation: 'Sum of all 5 numbers = 5 × 12 = 60. Sum of 4 numbers = 10 + 11 + 13 + 14 = 48. Fifth number = 60 - 48 = 12.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Statistics',
+      difficulty: 0.1,
+      tags: ['mean', 'statistics', 'algebra'],
+    },
+
+    // GEOMETRY & TRIGONOMETRY
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'In a right triangle with legs of length 3 and 4, what is the length of the hypotenuse?',
+        choices: ['5', '6', '7', '8'],
+        correctAnswer: '5',
+        explanation: 'Using the Pythagorean theorem: c² = a² + b² = 3² + 4² = 9 + 16 = 25. So c = 5.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Right Triangles',
+      difficulty: -0.7,
+      tags: ['pythagorean-theorem', 'right-triangles'],
+    },
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'What is the area of a circle with radius 6?',
+        choices: ['12π', '24π', '36π', '72π'],
+        correctAnswer: '36π',
+        explanation: 'Area = πr² = π(6)² = 36π',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Circles',
+      difficulty: -0.3,
+      tags: ['circles', 'area', 'geometry'],
+    },
+
+    // FLORIDA PERT SPECIFIC
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Simplify: (2x²y³)²',
+        choices: ['4x⁴y⁶', '2x⁴y⁶', '4x²y⁶', '2x⁴y⁵'],
+        correctAnswer: '4x⁴y⁶',
+        explanation: '(2x²y³)² = 2² × (x²)² × (y³)² = 4x⁴y⁶',
+      },
+      domain: 'Algebra',
+      subdomain: 'Exponents',
+      difficulty: 0.2,
+      tags: ['exponents', 'simplification', 'PERT'],
+    },
+    {
+      content: {
+        type: 'grid-in',
+        question: 'If log₂(x) = 3, what is the value of x?',
+        correctAnswer: '8',
+        explanation: 'log₂(x) = 3 means 2³ = x, so x = 8.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Logarithms',
+      difficulty: 0.6,
+      tags: ['logarithms', 'exponentials', 'PERT'],
     },
   ];
 
-  const questions = await Promise.all(
-    sampleQuestions.map((q) => prisma.question.create({ data: q }))
+  // Insert questions
+  const createdQuestions = await Promise.all(
+    questions.map((q) => prisma.question.create({ data: q }))
   );
 
   console.log(`✅ Created ${achievements.length} achievements`);
-  console.log(`✅ Created ${questions.length} sample questions`);
+  console.log(`✅ Created ${createdQuestions.length} questions`);
   console.log('🎉 Seeding complete!');
 }
 

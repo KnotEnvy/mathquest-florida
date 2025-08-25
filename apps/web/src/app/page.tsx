@@ -1,7 +1,6 @@
 // apps/web/src/app/page.tsx
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Trophy, Brain, Target } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -22,20 +21,36 @@ export default function HomePage() {
             adaptive practice, and game-like progression.
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link href="/register">
+            <Link href="/practice">
               <Button size="lg" className="gap-2">
-                Start Free Quest
-                <ArrowRight className="h-4 w-4" />
+                Try Practice Mode
+                {/* Arrow icon will be added after dependencies are installed */}
               </Button>
             </Link>
             <Link href="/demo" className="text-sm font-semibold leading-6 text-gray-900">
               Watch demo <span aria-hidden="true">→</span>
             </Link>
           </div>
+          
+          {/* Quick Stats */}
+          <div className="mt-16 flex justify-center gap-x-8">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-magenta-primary">13</div>
+              <div className="text-sm text-gray-600">Questions Ready</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-magenta-primary">4</div>
+              <div className="text-sm text-gray-600">Math Domains</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-magenta-primary">∞</div>
+              <div className="text-sm text-gray-600">Practice Sessions</div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Features Grid - Same as before */}
       <section className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
@@ -51,7 +66,8 @@ export default function HomePage() {
             <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
-                  <Brain className="h-5 w-5 flex-none text-magenta-primary" />
+                  {/* Brain icon placeholder */}
+                  <span className="h-5 w-5 flex-none text-magenta-primary">🧠</span>
                   AI-Powered Coach
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
@@ -64,7 +80,8 @@ export default function HomePage() {
               
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
-                  <Target className="h-5 w-5 flex-none text-magenta-primary" />
+                  {/* Target icon placeholder */}
+                  <span className="h-5 w-5 flex-none text-magenta-primary">🎯</span>
                   Adaptive Difficulty
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
@@ -77,7 +94,8 @@ export default function HomePage() {
               
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
-                  <Trophy className="h-5 w-5 flex-none text-magenta-primary" />
+                  {/* Trophy icon placeholder */}
+                  <span className="h-5 w-5 flex-none text-magenta-primary">🏆</span>
                   Gamified Progress
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
@@ -92,40 +110,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="bg-gray-50 py-16">
+      {/* CTA Section */}
+      <section className="bg-magenta-primary/10 py-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:max-w-none">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                Trusted by thousands of students
-              </h2>
-              <div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-4">
-                <div className="col-span-1 flex justify-center">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-magenta-primary">15+</div>
-                    <div className="mt-1 text-sm text-gray-600">Percentile point improvement</div>
-                  </div>
-                </div>
-                <div className="col-span-1 flex justify-center">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-magenta-primary">50K+</div>
-                    <div className="mt-1 text-sm text-gray-600">Questions completed daily</div>
-                  </div>
-                </div>
-                <div className="col-span-1 flex justify-center">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-magenta-primary">4.8★</div>
-                    <div className="mt-1 text-sm text-gray-600">Average rating</div>
-                  </div>
-                </div>
-                <div className="col-span-1 flex justify-center">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-magenta-primary">95%</div>
-                    <div className="mt-1 text-sm text-gray-600">Recommend to friends</div>
-                  </div>
-                </div>
-              </div>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Ready to boost your math score?
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Start practicing now with our free questions. No sign-up required!
+            </p>
+            <div className="mt-8">
+              <Link href="/practice">
+                <Button size="lg" variant="default">
+                  Start Practice Session
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
