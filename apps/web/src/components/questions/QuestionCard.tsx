@@ -16,13 +16,14 @@ interface QuestionContent {
 
 interface QuestionCardProps {
   content: QuestionContent;
-  onAnswer: (answer: string, isCorrect: boolean) => void;
+  onAnswer: (answer: string, isCorrect: boolean, timeSpent: number) => void;
 }
 
 export function QuestionCard({ content, onAnswer }: QuestionCardProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [startTime] = useState(Date.now());
 
   // Function to render math expressions
   const renderMathText = (text: string) => {
@@ -46,10 +47,11 @@ export function QuestionCard({ content, onAnswer }: QuestionCardProps) {
   const handleSubmit = () => {
     if (!selectedAnswer) return;
 
+    const timeSpent = Date.now() - startTime;
     const correct = selectedAnswer === content.correctAnswer;
     setIsCorrect(correct);
     setShowResult(true);
-    onAnswer(selectedAnswer, correct);
+    onAnswer(selectedAnswer, correct, timeSpent);
   };
 
   const handleNext = () => {

@@ -242,6 +242,91 @@ async function main() {
       difficulty: 0.6,
       tags: ['logarithms', 'exponentials', 'PERT'],
     },
+
+    // Additional ALGEBRA questions
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Which of the following is equivalent to 2(x + 3) - 4?',
+        choices: ['2x + 2', '2x + 6', '2x - 4', '2x + 10'],
+        correctAnswer: '2x + 2',
+        explanation: 'Distribute: 2(x + 3) = 2x + 6. Then subtract 4: 2x + 6 - 4 = 2x + 2.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Linear Equations',
+      difficulty: -0.5,
+      tags: ['distributive-property', 'simplifying'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'If 4x - 7 = 3x + 8, what is the value of x?',
+        correctAnswer: '15',
+        explanation: 'Subtract 3x from both sides: x - 7 = 8. Add 7 to both sides: x = 15.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Linear Equations',
+      difficulty: -0.3,
+      tags: ['linear-equations', 'solving-for-x'],
+    },
+
+    // Additional GEOMETRY questions
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'What is the area of a triangle with base 8 and height 6?',
+        choices: ['24', '28', '32', '48'],
+        correctAnswer: '24',
+        explanation: 'Area of triangle = (1/2) × base × height = (1/2) × 8 × 6 = 24.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Area and Perimeter',
+      difficulty: -0.8,
+      tags: ['area', 'triangles', 'basic-geometry'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'In a right triangle, if one angle is 30°, what is the measure of the third angle?',
+        choices: ['30°', '60°', '90°', '120°'],
+        correctAnswer: '60°',
+        explanation: 'In any triangle, angles sum to 180°. With 90° and 30°, the third angle is 180° - 90° - 30° = 60°.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Triangles',
+      difficulty: -0.2,
+      tags: ['triangles', 'angle-sum', 'right-triangles'],
+    },
+
+    // Additional DATA ANALYSIS questions
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'What is the median of the data set: 2, 5, 8, 8, 12, 15?',
+        choices: ['7', '8', '8.5', '10'],
+        correctAnswer: '8',
+        explanation: 'For 6 numbers, median is average of 3rd and 4th values: (8 + 8)/2 = 8.',
+      },
+      domain: 'Problem-Solving & Data Analysis',
+      subdomain: 'Statistics',
+      difficulty: -0.1,
+      tags: ['median', 'statistics', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'If 25% of a number is 18, what is the number?',
+        correctAnswer: '72',
+        explanation: 'Let x be the number. 0.25x = 18. Divide both sides by 0.25: x = 18/0.25 = 72.',
+      },
+      domain: 'Problem-Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: 0.1,
+      tags: ['percentages', 'proportions', 'problem-solving'],
+    },
   ];
 
   // Insert questions

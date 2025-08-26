@@ -9,19 +9,34 @@ export async function GET(request: Request) {
     const count = parseInt(searchParams.get('count') || '10');
     const domain = searchParams.get('domain') || undefined;
 
-    // Fetch random questions
+    // First get the total count
+    const totalCount = await prisma.question.count({
+      where: {
+        status: 'ACTIVE',
+        ...(domain && { domain }),
+      },
+    });
+
+    // Generate random skip value
+    const skip = Math.max(0, Math.floor(Math.random() * Math.max(0, totalCount - count)));
+
+    // Fetch questions with random offset
     const questions = await prisma.question.findMany({
       where: {
         status: 'ACTIVE',
         ...(domain && { domain }),
       },
       take: count,
+      skip,
       orderBy: {
-        createdAt: 'desc', // For now, we'll improve this with randomization later
+        id: 'asc', // Consistent ordering for pagination
       },
     });
 
-    return NextResponse.json({ questions });
+    // Shuffle the results for additional randomness
+    const shuffledQuestions = questions.sort(() => Math.random() - 0.5);
+
+    return NextResponse.json({ questions: shuffledQuestions });
   } catch (error) {
     console.error('Error fetching questions:', error);
     return NextResponse.json(

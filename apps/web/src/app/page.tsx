@@ -1,10 +1,18 @@
 // apps/web/src/app/page.tsx
+'use client';
+
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Navigation } from '@/components/navigation';
+import { useAuth } from '@/lib/auth';
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+
   return (
     <div className="flex min-h-screen flex-col">
+      <Navigation />
+      
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 px-6 py-24 sm:py-32 lg:px-8">
         <div className="absolute inset-0 -z-10">
@@ -21,15 +29,26 @@ export default function HomePage() {
             adaptive practice, and game-like progression.
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link href="/practice">
-              <Button size="lg" className="gap-2">
-                Try Practice Mode
-                {/* Arrow icon will be added after dependencies are installed */}
-              </Button>
-            </Link>
-            <Link href="/demo" className="text-sm font-semibold leading-6 text-gray-900">
-              Watch demo <span aria-hidden="true">→</span>
-            </Link>
+            {loading ? (
+              <div className="h-11 w-32 animate-pulse bg-gray-200 rounded"></div>
+            ) : user ? (
+              <Link href="/practice">
+                <Button size="lg" className="gap-2">
+                  Continue Practicing
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/register">
+                  <Button size="lg" className="gap-2">
+                    Get Started Free
+                  </Button>
+                </Link>
+                <Link href="/practice" className="text-sm font-semibold leading-6 text-gray-900">
+                  Try without signup <span aria-hidden="true">→</span>
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Quick Stats */}
@@ -121,11 +140,21 @@ export default function HomePage() {
               Start practicing now with our free questions. No sign-up required!
             </p>
             <div className="mt-8">
-              <Link href="/practice">
-                <Button size="lg" variant="default">
-                  Start Practice Session
-                </Button>
-              </Link>
+              {loading ? (
+                <div className="h-11 w-40 mx-auto animate-pulse bg-gray-200 rounded"></div>
+              ) : user ? (
+                <Link href="/dashboard">
+                  <Button size="lg" variant="default">
+                    View Your Progress
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/register">
+                  <Button size="lg" variant="default">
+                    Start Your Journey
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
