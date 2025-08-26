@@ -41,18 +41,20 @@ export async function POST(request: NextRequest) {
     // Update user XP (10 points for correct, 2 points for attempting)
     const xpGained = correct ? 10 : 2;
     
-    await prisma.profile.upsert({
+    const updatedProfile = await prisma.profile.upsert({
       where: { userId: user.id },
       update: {
         xp: { increment: xpGained },
       },
       create: {
         userId: user.id,
-        email: user.email!,
         displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Student',
         xp: xpGained,
       },
     });
+
+    console.log('XP gained:', xpGained);
+    console.log('Updated profile XP:', updatedProfile.xp);
 
     return NextResponse.json({ 
       success: true, 

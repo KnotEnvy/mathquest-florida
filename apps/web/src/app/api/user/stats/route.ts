@@ -37,6 +37,9 @@ export async function GET(request: NextRequest) {
       where: { userId: user.id },
     });
 
+    console.log('Profile found:', profile);
+    console.log('Profile XP:', profile?.xp);
+
     // Get attempt statistics
     const [totalAttempts, correctAttempts] = await Promise.all([
       prisma.attempt.count({
