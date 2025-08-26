@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 
+type AttemptWithQuestion = {
+  id: string;
+  correct: boolean;
+  timeSpent: number;
+  createdAt: Date;
+  question: {
+    domain: string;
+    difficulty: number;
+  };
+};
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient();
@@ -62,7 +73,7 @@ export async function GET(request: NextRequest) {
       correctAttempts,
       xp: profile?.xp || 0,
       currentLevel,
-      recentAttempts: recentAttempts.map(attempt => ({
+      recentAttempts: recentAttempts.map((attempt: AttemptWithQuestion) => ({
         id: attempt.id,
         question: {
           domain: attempt.question.domain,
