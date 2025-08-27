@@ -91,7 +91,7 @@ export default function HomePage() {
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
                   <p className="flex-auto">
-                    Get instant help from GPT-4 when you're stuck. Our AI coach provides 
+                    Get instant help from GPT-4 when you&apos;re stuck. Our AI coach provides 
                     hints, explanations, and encouragement tailored to your learning style.
                   </p>
                 </dd>

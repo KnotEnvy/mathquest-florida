@@ -1,7 +1,7 @@
 // apps/web/src/components/questions/QuestionCard.tsx
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';

@@ -40,7 +40,7 @@ export default function DashboardPage() {
     if (user) {
       fetchUserStats();
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   const fetchUserStats = async () => {
     try {
@@ -252,7 +252,7 @@ export default function DashboardPage() {
             <div className="text-6xl mb-4">📚</div>
             <h3 className="text-xl font-semibold mb-2">Ready to start learning?</h3>
             <p className="text-gray-600 mb-6">
-              You haven't attempted any questions yet. Let's get started!
+              You haven&apos;t attempted any questions yet. Let&apos;s get started!
             </p>
             <Button onClick={() => router.push('/practice')} size="lg">
               Start Your First Practice Session
