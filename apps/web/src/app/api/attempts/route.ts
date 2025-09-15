@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { AttemptPostSchema } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,18 +22,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const { questionId, answer, correct, timeSpent } = await request.json();
-
-    if (!questionId || answer === undefined || correct === undefined || timeSpent === undefined) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const body = await request.json();
+    const parsed = AttemptPostSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
+
+    const { questionId, answer, correct, timeSpent } = parsed.data;
 
     // Save attempt to database
     const attempt = await prisma.attempt.create({
       data: {
         userId: user.id,
         questionId,
-        answer: String(answer),
+        answer,
         correct,
         timeSpent,
       },
