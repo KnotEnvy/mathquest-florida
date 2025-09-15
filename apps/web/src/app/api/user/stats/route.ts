@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { StatsQuerySchema } from '@/lib/validation';
 
 type AttemptWithQuestion = {
   id: string;
@@ -15,6 +16,16 @@ type AttemptWithQuestion = {
 
 export async function GET(request: NextRequest) {
   try {
+    // Validate optional query params
+    const { searchParams } = new URL(request.url);
+    const parsed = StatsQuerySchema.safeParse({ recent: searchParams.get('recent') ?? undefined });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const { recent } = parsed.data;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -65,7 +76,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 10,
+      take: recent,
     });
 
     // Calculate current level based on XP (100 XP per level)

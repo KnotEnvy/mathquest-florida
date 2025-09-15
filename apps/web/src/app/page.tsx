@@ -25,8 +25,8 @@ export default function HomePage() {
             <span className="text-magenta-primary">daily wins</span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            Master SAT Math and Florida college readiness exams with AI-powered coaching, 
-            adaptive practice, and game-like progression.
+            Master SAT Math and Florida college readiness exams with 100+ expert-crafted questions, 
+            AI-powered coaching, and game-like progression. Fresh content added daily!
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             {loading ? (
@@ -54,12 +54,12 @@ export default function HomePage() {
           {/* Quick Stats */}
           <div className="mt-16 flex justify-center gap-x-8">
             <div className="text-center">
-              <div className="text-2xl font-bold text-magenta-primary">13</div>
-              <div className="text-sm text-gray-600">Questions Ready</div>
+              <div className="text-2xl font-bold text-magenta-primary">100+</div>
+              <div className="text-sm text-gray-600">Expert Questions</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-magenta-primary">4</div>
-              <div className="text-sm text-gray-600">Math Domains</div>
+              <div className="text-2xl font-bold text-magenta-primary">All</div>
+              <div className="text-sm text-gray-600">SAT Math Domains</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-magenta-primary">∞</div>
@@ -77,7 +77,11 @@ export default function HomePage() {
               Learn Smarter
             </h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Everything you need to ace your math exams
+              100+ questions covering every SAT Math topic
+            </p>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              From basic algebra to advanced trigonometry, our expert team adds new questions daily 
+              to ensure you&apos;re always practicing with fresh, challenging content.
             </p>
           </div>
           
@@ -105,8 +109,8 @@ export default function HomePage() {
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
                   <p className="flex-auto">
-                    Questions adjust to your skill level in real-time, keeping you in the 
-                    optimal challenge zone for maximum learning.
+                    Our 100+ questions adapt to your skill level in real-time, covering all SAT Math 
+                    domains with fresh content added daily to keep you challenged.
                   </p>
                 </dd>
               </div>
@@ -137,7 +141,8 @@ export default function HomePage() {
               Ready to boost your math score?
             </h2>
             <p className="mt-4 text-lg text-gray-600">
-              Start practicing now with our free questions. No sign-up required!
+              Join thousands of students mastering math with our growing library of 100+ questions. 
+              New expert-crafted problems added daily to keep our most dedicated learners challenged!
             </p>
             <div className="mt-8">
               {loading ? (

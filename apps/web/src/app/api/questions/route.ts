@@ -1,13 +1,25 @@
 // apps/web/src/app/api/questions/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { QuestionsQuerySchema } from '@/lib/validation';
 
 export async function GET(request: Request) {
   try {
-    // Get query parameters
+    // Validate query parameters
     const { searchParams } = new URL(request.url);
-    const count = parseInt(searchParams.get('count') || '10');
-    const domain = searchParams.get('domain') || undefined;
+    const parsed = QuestionsQuerySchema.safeParse({
+      count: searchParams.get('count'),
+      domain: searchParams.get('domain') ?? undefined,
+    });
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { count, domain } = parsed.data;
 
     // First get the total count
     const totalCount = await prisma.question.count({

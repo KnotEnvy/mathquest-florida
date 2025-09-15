@@ -7,6 +7,7 @@ import { QuestionCard } from '@/components/questions/QuestionCard';
 import { Button } from '@/components/ui/button';
 import { Navigation } from '@/components/navigation';
 import { useAuth } from '@/lib/auth';
+import { Trophy, PartyPopper, ThumbsUp } from 'lucide-react';
 
 interface QuestionContent {
   type: 'multiple-choice' | 'grid-in';
@@ -51,7 +52,7 @@ export default function PracticePage() {
 
   const handleAnswer = async (answer: string, isCorrect: boolean, timeSpent: number) => {
     if (isCorrect) {
-      setScore(score + 1);
+      setScore((s) => s + 1);
     }
 
     // Save attempt to database if user is authenticated
@@ -69,7 +70,7 @@ export default function PracticePage() {
             timeSpent,
           }),
         });
-        
+
         const result = await response.json();
         if (result.success) {
           console.log(`XP gained: ${result.attempt.xpGained} points!`);
@@ -82,7 +83,7 @@ export default function PracticePage() {
     // Move to next question after a delay
     setTimeout(() => {
       if (currentIndex < questions.length - 1) {
-        setCurrentIndex(currentIndex + 1);
+        setCurrentIndex((i) => i + 1);
       } else {
         setCompleted(true);
         // Update streak when practice session is completed
@@ -101,10 +102,10 @@ export default function PracticePage() {
           'Content-Type': 'application/json',
         },
       });
-      
+
       const result = await response.json();
       if (result.streakIncreased) {
-        console.log(`Streak increased to ${result.currentStreak}! 🔥`);
+        console.log(`Streak increased to ${result.currentStreak}! 🎉`);
       }
     } catch (error) {
       console.error('Error updating streak:', error);
@@ -153,7 +154,10 @@ export default function PracticePage() {
         <Navigation />
         <div className="flex items-center justify-center pt-20">
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-            <h2 className="text-3xl font-bold mb-4">Practice Complete! 🎉</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              Practice Complete!{' '}
+              <PartyPopper className="inline h-8 w-8 text-purple-600 align-[-2px]" aria-hidden="true" />
+            </h2>
             <p className="text-xl mb-6">
               Your Score: <span className="font-bold text-purple-600">{score}/{questions.length}</span>
             </p>
@@ -176,15 +180,21 @@ export default function PracticePage() {
               </div>
             )}
             <div className="mb-6">
-              <div className="text-6xl mb-2">
-                {score === questions.length ? '🏆' : score >= questions.length * 0.7 ? '🌟' : '💪'}
+              <div className="mb-2">
+                {score === questions.length ? (
+                  <Trophy className="inline h-12 w-12 text-yellow-500" aria-label="Perfect score" />
+                ) : score >= questions.length * 0.7 ? (
+                  <PartyPopper className="inline h-12 w-12 text-purple-600" aria-label="Great job" />
+                ) : (
+                  <ThumbsUp className="inline h-12 w-12 text-gray-500" aria-label="Keep practicing" />
+                )}
               </div>
               <p className="text-gray-600">
-                {score === questions.length 
-                  ? 'Perfect score! Amazing work!' 
-                  : score >= questions.length * 0.7 
-                  ? 'Great job! Keep it up!' 
-                  : 'Keep practicing, you\'ll get there!'}
+                {score === questions.length
+                  ? 'Perfect score! Amazing work!'
+                  : score >= questions.length * 0.7
+                  ? 'Great job! Keep it up!'
+                  : "Keep practicing, you'll get there!"}
               </p>
             </div>
             <div className="space-y-2">
@@ -192,10 +202,10 @@ export default function PracticePage() {
                 Practice Again
               </Button>
               {user && (
-                <Button 
-                  onClick={() => router.push('/dashboard')} 
-                  variant="outline" 
-                  size="lg" 
+                <Button
+                  onClick={() => router.push('/dashboard')}
+                  variant="outline"
+                  size="lg"
                   className="w-full"
                 >
                   View Dashboard
@@ -232,7 +242,7 @@ export default function PracticePage() {
             <span>Score: {score}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-purple-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
             />
@@ -240,7 +250,7 @@ export default function PracticePage() {
         </div>
 
         {/* Question Card */}
-        <QuestionCard 
+        <QuestionCard
           key={currentQuestion.id}
           content={currentQuestion.content}
           onAnswer={handleAnswer}
@@ -248,10 +258,11 @@ export default function PracticePage() {
 
         {/* Domain & Difficulty Info */}
         <div className="mt-4 text-center text-sm text-gray-500">
-          Domain: {currentQuestion.domain} | 
+          Domain: {currentQuestion.domain} |
           Difficulty: {currentQuestion.difficulty > 0.5 ? 'Hard' : currentQuestion.difficulty > -0.5 ? 'Medium' : 'Easy'}
         </div>
       </div>
     </div>
   );
 }
+
