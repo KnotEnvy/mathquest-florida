@@ -1,11 +1,11 @@
 // apps/web/src/lib/coach/service.ts
-import OpenAI from 'openai';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import OpenAI from "openai";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
-export type CoachMode = 'hint' | 'explain' | 'comfort' | 'challenge';
+export type CoachMode = "hint" | "explain" | "comfort" | "challenge";
 
 export interface CoachMessage {
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
 }
 
@@ -48,28 +48,28 @@ export interface CoachCompletionResult {
 const MODE_BEHAVIORS: Record<CoachMode, { guidance: string; temperature: number }> = {
   hint: {
     guidance:
-      'Offer a concise hint that nudges the student toward the next logical step without giving away the full solution. Encourage them to show their work.',
+      "Offer a concise hint that nudges the student toward the next logical step without giving away the full solution. Encourage them to show their work.",
     temperature: 0.3,
   },
   explain: {
     guidance:
-      'Deliver a complete step-by-step explanation with clear reasoning and math notation. Tie the concept back to SAT Math framing where possible.',
+      "Deliver a complete step-by-step explanation with clear reasoning and math notation. Tie the concept back to SAT Math framing where possible.",
     temperature: 0.2,
   },
   comfort: {
     guidance:
-      'Lead with empathy and encouragement. Normalize struggle, reflect their effort, and offer a reassuring next action. Keep math guidance lightweight.',
+      "Lead with empathy and encouragement. Normalize struggle, reflect their effort, and offer a reassuring next action. Keep math guidance lightweight.",
     temperature: 0.6,
   },
   challenge: {
     guidance:
-      'Push the student to think deeper. Ask follow-up questions, highlight patterns, and suggest strategies that raise the difficulty slightly.',
+      "Push the student to think deeper. Ask follow-up questions, highlight patterns, and suggest strategies that raise the difficulty slightly.",
     temperature: 0.5,
   },
 };
 
 const SYSTEM_PREAMBLE =
-  'You are MathQuest Coach, an encouraging AI tutor helping Florida SAT students conquer math anxiety.';
+  "You are MathQuest Coach, an encouraging AI tutor helping Florida SAT students conquer math anxiety.";
 
 let cachedClient: OpenAI | null = null;
 
@@ -80,7 +80,7 @@ export function getCoachClient() {
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured');
+    throw new Error("OPENAI_API_KEY is not configured");
   }
 
   cachedClient = new OpenAI({ apiKey });
@@ -91,7 +91,7 @@ function buildContextDetails({
   question,
   attemptSummary,
   topic,
-}: Pick<CoachRequestPayload, 'question' | 'attemptSummary' | 'topic'>) {
+}: Pick<CoachRequestPayload, "question" | "attemptSummary" | "topic">) {
   const details: string[] = [];
 
   if (topic) {
@@ -99,71 +99,109 @@ function buildContextDetails({
   }
 
   if (question) {
-    const parts: string[] = ['Current question prompt:', question.prompt];
+    const parts: string[] = ["Current question prompt:", question.prompt];
     if (question.choices?.length) {
-      parts.push(`Choices: ${question.choices.join(', ')}`);
+      parts.push(`Choices: ${question.choices.join(", ")}`);
     }
     if (question.domain) {
       parts.push(`Domain: ${question.domain}.`);
     }
-    if (typeof question.difficulty === 'number') {
+    if (typeof question.difficulty === "number") {
       parts.push(`Difficulty parameter: ${question.difficulty.toFixed(2)}.`);
     }
-    details.push(parts.join(' '));
+    details.push(parts.join(" "));
   }
 
   if (attemptSummary) {
     const summary: string[] = [];
-    if (typeof attemptSummary.attempts === 'number') {
+    if (typeof attemptSummary.attempts === "number") {
       summary.push(`Attempts this session: ${attemptSummary.attempts}.`);
     }
     if (attemptSummary.lastAnswer) {
       summary.push(`Most recent answer: ${attemptSummary.lastAnswer}.`);
     }
-    if (typeof attemptSummary.correct === 'boolean') {
-      summary.push(`Last answer correct: ${attemptSummary.correct ? 'yes' : 'no'}.`);
+    if (typeof attemptSummary.correct === "boolean") {
+      summary.push(`Last answer correct: ${attemptSummary.correct ? "yes" : "no"}.`);
     }
-    if (typeof attemptSummary.streak === 'number') {
+    if (typeof attemptSummary.streak === "number") {
       summary.push(`Current streak: ${attemptSummary.streak}.`);
     }
     if (summary.length) {
-      details.push(summary.join(' '));
+      details.push(summary.join(" "));
     }
   }
 
   if (!details.length) {
-    return '';
+    return "";
   }
 
-  return `Context: ${details.join(' ')}`;
+  return `Context: ${details.join(" ")}`;
 }
 
 function buildSystemPrompt(mode: CoachMode, contextDetails: string) {
   const persona = MODE_BEHAVIORS[mode];
-  return [SYSTEM_PREAMBLE, persona.guidance, 'Keep responses under 180 words, use friendly language, and include LaTeX for math when useful.', contextDetails]
+  return [
+    SYSTEM_PREAMBLE,
+    persona.guidance,
+    "Keep responses under 180 words, use friendly language, and include LaTeX for math when useful.",
+    contextDetails,
+  ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 }
 
-function toOpenAIMessages({ mode, messages, question, attemptSummary, topic }: CoachRequestPayload) {
-  const contextDetails = buildContextDetails({ question, attemptSummary, topic });
-  const systemPrompt = buildSystemPrompt(mode, contextDetails);
+function toOpenAIMessages(payload: CoachRequestPayload) {
+  const contextDetails = buildContextDetails(payload);
+  const systemPrompt = buildSystemPrompt(payload.mode, contextDetails);
 
   const preparedMessages: ChatCompletionMessageParam[] = [
-    { role: 'system', content: systemPrompt },
-    ...messages.map((message) => ({ role: message.role, content: message.content })),
+    { role: "system", content: systemPrompt },
+    ...payload.messages.map((message) => ({ role: message.role, content: message.content })),
   ];
 
   return preparedMessages;
 }
 
-const DEFAULT_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
-const MAX_RETRIES = Number.parseInt(process.env.COACH_MAX_RETRIES ?? '2', 10);
+const DEFAULT_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+const USE_RESPONSES_API = DEFAULT_MODEL.startsWith("gpt-5");
+const MAX_RETRIES = Number.parseInt(process.env.COACH_MAX_RETRIES ?? "2", 10);
 
 async function delay(ms: number) {
   await new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function formatUsage(usage?: {
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  total_tokens?: number | null;
+  input_tokens?: number | null;
+  output_tokens?: number | null;
+}) {
+  if (!usage) {
+    return null;
+  }
+
+  const promptTokens = usage.prompt_tokens ?? usage.input_tokens ?? null;
+  const completionTokens = usage.completion_tokens ?? usage.output_tokens ?? null;
+  const totalTokens = usage.total_tokens ??
+    (promptTokens !== null && completionTokens !== null
+      ? promptTokens + completionTokens
+      : null);
+
+  return {
+    promptTokens,
+    completionTokens,
+    totalTokens,
+  };
+}
+
+function toResponsesInput(messages: ChatCompletionMessageParam[]) {
+  return messages.map((message) => ({
+    role: message.role,
+    content: [{ type: "text", text: message.content?.toString() ?? "" }],
+  }));
 }
 
 export async function generateCoachCompletion(payload: CoachRequestPayload): Promise<CoachCompletionResult> {
@@ -175,6 +213,35 @@ export async function generateCoachCompletion(payload: CoachRequestPayload): Pro
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
+      if (USE_RESPONSES_API) {
+        const response = await client.responses.create({
+          model: DEFAULT_MODEL,
+          input: toResponsesInput(messages),
+          temperature,
+          max_output_tokens: 512,
+        });
+
+        const responseText = response.output_text?.trim();
+        if (!responseText) {
+          throw new Error("Coach returned an empty response");
+        }
+
+        const finishReason =
+          (response.output && response.output[response.output.length - 1]?.finish_reason) ?? null;
+
+        return {
+          message: responseText,
+          finishReason,
+          usage: formatUsage({
+            input_tokens: response.usage?.input_tokens,
+            output_tokens: response.usage?.output_tokens,
+            total_tokens: response.usage?.total_tokens,
+          }),
+          attempts: attempt,
+          latencyMs: Date.now() - start,
+        };
+      }
+
       const completion = await client.chat.completions.create({
         model: DEFAULT_MODEL,
         temperature,
@@ -186,13 +253,17 @@ export async function generateCoachCompletion(payload: CoachRequestPayload): Pro
       const responseText = choice?.message?.content?.trim();
 
       if (!responseText) {
-        throw new Error('Coach returned an empty response');
+        throw new Error("Coach returned an empty response");
       }
 
       return {
         message: responseText,
         finishReason: choice?.finish_reason ?? null,
-        usage: completion.usage ?? null,
+        usage: formatUsage({
+          prompt_tokens: completion.usage?.prompt_tokens ?? null,
+          completion_tokens: completion.usage?.completion_tokens ?? null,
+          total_tokens: completion.usage?.total_tokens ?? null,
+        }),
         attempts: attempt,
         latencyMs: Date.now() - start,
       };
@@ -206,7 +277,7 @@ export async function generateCoachCompletion(payload: CoachRequestPayload): Pro
     }
   }
 
-  throw new Error('Unable to contact coach');
+  throw new Error("Unable to contact coach");
 }
 
 export function buildCoachCacheFingerprint(payload: CoachRequestPayload) {

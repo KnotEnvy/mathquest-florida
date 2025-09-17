@@ -1,11 +1,23 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 
 export function Navigation() {
   const { user, loading, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace("/");
+    } catch (error) {
+      console.error("Sign-out failed", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -15,7 +27,7 @@ export function Navigation() {
             <Link href="/" className="text-xl font-bold text-gray-900">
               MathQuest Florida
             </Link>
-            <div className="h-8 w-20 animate-pulse bg-gray-200 rounded"></div>
+            <div className="h-8 w-20 animate-pulse rounded bg-gray-200" />
           </div>
         </div>
       </nav>
@@ -30,18 +42,17 @@ export function Navigation() {
             <Link href="/" className="text-xl font-bold text-gray-900">
               MathQuest Florida
             </Link>
-            
             {user && (
               <div className="hidden md:flex space-x-6">
-                <Link 
-                  href="/practice" 
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                <Link
+                  href="/practice"
+                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
                   Practice
                 </Link>
-                <Link 
-                  href="/dashboard" 
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                <Link
+                  href="/dashboard"
+                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
                   Dashboard
                 </Link>
@@ -51,14 +62,12 @@ export function Navigation() {
 
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-700">
-                  Welcome, {user.user_metadata?.display_name || user.email?.split('@')[0]}!
+              <div className="flex items-center space-x-3">
+                <span className="hidden text-sm text-gray-700 sm:inline">
+                  {user.user_metadata?.display_name || user.email?.split("@")[0]}
                 </span>
-                <Button onClick={() => {
-                  console.log('Sign out button clicked');
-                  signOut();
-                }} variant="outline" size="sm">
+                <Button onClick={handleSignOut} variant="outline" size="sm" className="flex items-center gap-2">
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
                   Sign Out
                 </Button>
               </div>
@@ -70,9 +79,7 @@ export function Navigation() {
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button size="sm">
-                    Get Started
-                  </Button>
+                  <Button size="sm">Get Started</Button>
                 </Link>
               </div>
             )}
