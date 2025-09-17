@@ -1,16 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const mockCreate = vi.fn();
-const mockConstructor = vi.fn(() => ({
-  chat: {
-    completions: {
-      create: mockCreate,
-    },
-  },
+const generateCoachCompletion = vi.fn();
+const buildCoachCacheKey = vi.fn(() => 'coach:cache:test');
+const getCachedCoachResponse = vi.fn();
+const setCoachCacheResponse = vi.fn();
+const createCacheEntry = vi.fn((mode, result) => ({ ...result, mode, cachedAt: Date.now() }));
+const enforceCoachRateLimit = vi.fn();
+const ensureCoachContentIsSafe = vi.fn();
+
+vi.mock('@/lib/coach/service', () => ({
+  generateCoachCompletion,
 }));
 
-vi.mock('openai', () => ({
-  default: mockConstructor,
+vi.mock('@/lib/coach/cache', () => ({
+  buildCoachCacheKey,
+  getCachedCoachResponse,
+  setCoachCacheResponse,
+  createCacheEntry,
+}));
+
+vi.mock('@/lib/coach/rate-limit', () => ({
+  enforceCoachRateLimit,
+}));
+
+vi.mock('@/lib/coach/moderation', () => ({
+  ensureCoachContentIsSafe,
 }));
 
 describe('/api/coach', () => {
@@ -19,11 +33,11 @@ describe('/api/coach', () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    mockCreate.mockReset();
-    mockConstructor.mockClear();
+    vi.clearAllMocks();
     process.env.OPENAI_API_KEY = 'test-key';
-    const route = await import('./route');
-    POST = route.POST;
+    enforceCoachRateLimit.mockResolvedValue({ allowed: true, remaining: 19, limit: 20, retryAfterSeconds: 0 });
+    ensureCoachContentIsSafe.mockResolvedValue({ allowed: true });
+    POST = (await import('./route')).POST;
   });
 
   afterEach(() => {
@@ -31,96 +45,164 @@ describe('/api/coach', () => {
   });
 
   it('returns 400 for invalid json body', async () => {
-    const request = new Request('http://localhost/api/coach', {
-      method: 'POST',
-      body: 'not-json',
-    });
+    const response = await POST(
+      new Request('http://localhost/api/coach', {
+        method: 'POST',
+        body: 'invalid-json',
+      }),
+    );
 
-    const response = await POST(request);
     expect(response.status).toBe(400);
   });
 
   it('returns 400 for invalid payload structure', async () => {
-    const request = new Request('http://localhost/api/coach', {
-      method: 'POST',
-      body: JSON.stringify({}),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const response = await POST(request);
-    const data = await response.json();
+    const response = await POST(
+      new Request('http://localhost/api/coach', {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Invalid request payload');
   });
 
   it('returns 503 when API key is missing', async () => {
     process.env.OPENAI_API_KEY = '';
-    const route = await import('./route');
-    const request = new Request('http://localhost/api/coach', {
-      method: 'POST',
-      body: JSON.stringify({
-        mode: 'hint',
-        messages: [{ role: 'user', content: 'Hello' }],
-      }),
-    });
+    POST = (await import('./route')).POST;
 
-    const response = await route.POST(request);
+    const response = await POST(
+      new Request('http://localhost/api/coach', {
+        method: 'POST',
+        body: JSON.stringify({
+          mode: 'hint',
+          messages: [{ role: 'user', content: 'Hello' }],
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
     expect(response.status).toBe(503);
   });
 
-  it('forwards request to OpenAI and returns response text', async () => {
-    mockCreate.mockResolvedValue({
-      choices: [
-        {
-          message: { content: 'Try isolating x.' },
-          finish_reason: 'stop',
-        },
-      ],
-      usage: { total_tokens: 42 },
+  it('serves cached responses when available', async () => {
+    getCachedCoachResponse.mockResolvedValue({
+      message: 'cached',
+      mode: 'hint',
+      finishReason: 'stop',
+      usage: { totalTokens: 10 },
+      attempts: 1,
+      latencyMs: 120,
+      cachedAt: Date.now(),
     });
-
-    const payload = {
-      mode: 'hint' as const,
-      messages: [
-        { role: 'user' as const, content: 'I am stuck solving 2x + 3 = 11.' },
-      ],
-      question: {
-        prompt: 'Solve 2x + 3 = 11',
-        choices: ['3', '4', '5', '6'],
-        domain: 'Algebra',
-        difficulty: -0.3,
-      },
-      attemptSummary: {
-        attempts: 1,
-        lastAnswer: '5',
-        correct: false,
-      },
-    };
 
     const request = new Request('http://localhost/api/coach', {
       method: 'POST',
-      body: JSON.stringify(payload),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'hint',
+        messages: [{ role: 'user', content: 'Need help' }],
+      }),
     });
 
     const response = await POST(request);
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(mockConstructor).toHaveBeenCalledWith({ apiKey: 'test-key' });
-    expect(mockCreate).toHaveBeenCalledTimes(1);
-    const callArgs = mockCreate.mock.calls[0][0];
-    expect(callArgs.model).toBe('gpt-4o-mini');
-    expect(callArgs.messages[0].role).toBe('system');
-    expect(callArgs.messages[1]).toEqual(payload.messages[0]);
-    expect(data.message).toBe('Try isolating x.');
+    expect(data.message).toBe('cached');
+    expect(data.cached).toBe(true);
+    expect(generateCoachCompletion).not.toHaveBeenCalled();
+  });
+
+  it('calls coach service and stores cache when not cached', async () => {
+    getCachedCoachResponse.mockResolvedValue(null);
+    generateCoachCompletion.mockResolvedValue({
+      message: 'Try isolating x.',
+      finishReason: 'stop',
+      usage: { totalTokens: 42 },
+      attempts: 1,
+      latencyMs: 250,
+    });
+
+    const request = new Request('http://localhost/api/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'hint',
+        messages: [{ role: 'user', content: 'How do I solve this?' }],
+        question: {
+          prompt: 'Solve 2x + 3 = 11',
+        },
+      }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateCoachCompletion).toHaveBeenCalledTimes(1);
+    expect(setCoachCacheResponse).toHaveBeenCalledWith(
+      'coach:cache:test',
+      expect.objectContaining({ message: 'Try isolating x.' }),
+    );
+    expect(data.cached).toBe(false);
     expect(data.mode).toBe('hint');
-    expect(data.finishReason).toBe('stop');
-    expect(data.usage.total_tokens).toBe(42);
+  });
+
+  it('returns 429 when rate limit is exceeded', async () => {
+    enforceCoachRateLimit.mockResolvedValue({ allowed: false, remaining: 0, limit: 20, retryAfterSeconds: 120 });
+
+    const response = await POST(
+      new Request('http://localhost/api/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'hint',
+          messages: [{ role: 'user', content: 'Hello' }],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({ error: 'Too many coach requests. Try again soon.' });
+  });
+
+  it('blocks flagged content from moderation', async () => {
+    getCachedCoachResponse.mockResolvedValue(null);
+    ensureCoachContentIsSafe.mockResolvedValue({ allowed: false, flaggedCategories: ['violence'] });
+
+    const response = await POST(
+      new Request('http://localhost/api/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'hint',
+          messages: [{ role: 'user', content: 'harmful request' }],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.flaggedCategories).toContain('violence');
+    expect(generateCoachCompletion).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when the coach service throws', async () => {
+    getCachedCoachResponse.mockResolvedValue(null);
+    generateCoachCompletion.mockRejectedValue(new Error('openai down'));
+
+    const response = await POST(
+      new Request('http://localhost/api/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'hint',
+          messages: [{ role: 'user', content: 'Need help' }],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(500);
   });
 });

@@ -27,14 +27,40 @@ interface Question {
 
 const ABILITY_STORAGE_KEY = 'mathquestAbilityEstimate';
 
+function clampAbility(value: number) {
+  return Number(Math.max(-2.5, Math.min(2.5, value)).toFixed(2));
+}
+
 function calculateAbility(score: number, attempts: number): number {
   if (!attempts) {
     return 0;
   }
   const accuracy = score / attempts;
-  const scaled = (accuracy - 0.6) * 5; // roughly map 60% accuracy to ability 0
-  const clamped = Math.max(-2.5, Math.min(2.5, scaled));
-  return Number(clamped.toFixed(2));
+  const scaled = (accuracy - 0.6) * 5;
+  return clampAbility(scaled);
+}
+
+function readStoredAbility(): number | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const stored = window.localStorage.getItem(ABILITY_STORAGE_KEY);
+  if (!stored) {
+    return null;
+  }
+  const parsed = Number.parseFloat(stored);
+  return Number.isNaN(parsed) ? null : clampAbility(parsed);
+}
+
+function persistAbility(value: number | null) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (value === null) {
+    window.localStorage.removeItem(ABILITY_STORAGE_KEY);
+  } else {
+    window.localStorage.setItem(ABILITY_STORAGE_KEY, value.toFixed(2));
+  }
 }
 
 export default function PracticePage() {
@@ -50,28 +76,52 @@ export default function PracticePage() {
   const [abilityEstimate, setAbilityEstimate] = useState<number | null>(null);
 
   useEffect(() => {
-    let initialAbility: number | null = null;
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem(ABILITY_STORAGE_KEY);
-      if (stored) {
-        const parsed = Number.parseFloat(stored);
-        if (!Number.isNaN(parsed)) {
-          initialAbility = parsed;
-          setAbilityEstimate(parsed);
+    if (authLoading) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      let startingAbility: number | null = null;
+
+      if (user) {
+        try {
+          const response = await fetch('/api/user/stats?recent=25', { cache: 'no-store' });
+          if (response.ok) {
+            const data = await response.json();
+            if (typeof data.abilityEstimate === 'number') {
+              startingAbility = clampAbility(data.abilityEstimate);
+            }
+          }
+        } catch (error) {
+          console.error('Unable to load stats ability:', error);
         }
       }
-    }
-    fetchQuestions(initialAbility);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (abilityEstimate === null) return;
-    window.localStorage.setItem(ABILITY_STORAGE_KEY, abilityEstimate.toFixed(2));
-  }, [abilityEstimate]);
+      if (startingAbility === null) {
+        startingAbility = readStoredAbility();
+      }
 
-  const fetchQuestions = async (targetAbility: number | null = abilityEstimate) => {
+      if (cancelled) {
+        return;
+      }
+
+      setAbilityEstimate(startingAbility);
+      if (startingAbility !== null) {
+        persistAbility(startingAbility);
+      }
+      await fetchQuestions(startingAbility);
+    };
+
+    bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user]);
+
+  const fetchQuestions = async (targetAbility: number | null) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({ count: '5' });
@@ -135,8 +185,9 @@ export default function PracticePage() {
         setCurrentIndex((index) => index + 1);
       } else {
         setCompleted(true);
-        const updatedAbility = calculateAbility(nextScore, nextAttempts);
+        const updatedAbility = clampAbility(calculateAbility(nextScore, nextAttempts));
         setAbilityEstimate(updatedAbility);
+        persistAbility(updatedAbility);
         if (user) {
           updateStreak();
         }
@@ -166,21 +217,7 @@ export default function PracticePage() {
     fetchQuestions(abilityEstimate);
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen">
-        <Navigation />
-        <div className="flex items-center justify-center pt-20">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-purple-600" />
-            <p>Checking your session...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />

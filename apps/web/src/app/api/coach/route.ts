@@ -1,109 +1,51 @@
 // apps/web/src/app/api/coach/route.ts
-import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 import { CoachRequestSchema } from '@/lib/validation';
+import { generateCoachCompletion, type CoachRequestPayload } from '@/lib/coach/service';
+import { buildCoachCacheKey, createCacheEntry, getCachedCoachResponse, setCoachCacheResponse } from '@/lib/coach/cache';
+import { enforceCoachRateLimit } from '@/lib/coach/rate-limit';
+import { ensureCoachContentIsSafe } from '@/lib/coach/moderation';
 
-const MODE_BEHAVIORS: Record<'hint' | 'explain' | 'comfort' | 'challenge', { guidance: string; temperature: number }> = {
-  hint: {
-    guidance:
-      'Offer a concise hint that nudges the student toward the next logical step without giving away the full solution. Encourage them to show their work.',
-    temperature: 0.3,
-  },
-  explain: {
-    guidance:
-      'Deliver a complete step-by-step explanation with clear reasoning and math notation. Tie the concept back to SAT Math framing where possible.',
-    temperature: 0.2,
-  },
-  comfort: {
-    guidance:
-      'Lead with empathy and encouragement. Normalize struggle, reflect their effort, and offer a reassuring next action. Keep math guidance lightweight.',
-    temperature: 0.6,
-  },
-  challenge: {
-    guidance:
-      'Push the student to think deeper. Ask follow-up questions, highlight patterns, and suggest strategies that raise the difficulty slightly.',
-    temperature: 0.5,
-  },
-};
+function getClientIdentifier(request: Request) {
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0]?.trim() ?? 'anonymous';
+  }
 
-function buildSystemPrompt(mode: 'hint' | 'explain' | 'comfort' | 'challenge', context: string) {
-  const persona = MODE_BEHAVIORS[mode];
-  return [
-    'You are MathQuest Coach, an encouraging AI tutor helping Florida SAT students conquer math anxiety.',
-    persona.guidance,
-    'Keep responses under 180 words, use friendly language, and include LaTeX for math when useful.',
-    context,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const realIp =
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('fastly-client-ip');
+
+  if (realIp) {
+    return realIp;
+  }
+
+  return 'anonymous';
 }
 
-function buildContext({
-  question,
-  attemptSummary,
-}: {
-  question?: {
-    id?: string;
-    prompt: string;
-    choices?: string[];
-    correctAnswer?: string;
-    domain?: string;
-    difficulty?: number;
-  };
-  attemptSummary?: {
-    attempts?: number;
-    lastAnswer?: string;
-    correct?: boolean;
-    streak?: number;
-  };
-}) {
-  const details: string[] = [];
+function getModerationInput(payload: CoachRequestPayload) {
+  const lastUserMessage = [...payload.messages].reverse().find((message) => message.role === 'user');
+  const parts = [lastUserMessage?.content ?? '', payload.question?.prompt ?? '', payload.topic ?? '']
+    .map((entry) => entry?.trim())
+    .filter((entry) => entry && entry.length > 0);
 
-  if (question) {
-    const parts: string[] = ['Current question prompt:', question.prompt];
-    if (question.choices?.length) {
-      parts.push(`Choices: ${question.choices.join(', ')}`);
-    }
-    if (question.domain) {
-      parts.push(`Domain: ${question.domain}.`);
-    }
-    if (typeof question.difficulty === 'number') {
-      parts.push(`Difficulty parameter: ${question.difficulty.toFixed(2)}.`);
-    }
-    details.push(parts.join(' '));
-  }
+  return parts.join('\n');
+}
 
-  if (attemptSummary) {
-    const summary: string[] = [];
-    if (typeof attemptSummary.attempts === 'number') {
-      summary.push(`Attempts this session: ${attemptSummary.attempts}.`);
-    }
-    if (attemptSummary.lastAnswer) {
-      summary.push(`Most recent answer: ${attemptSummary.lastAnswer}.`);
-    }
-    if (typeof attemptSummary.correct === 'boolean') {
-      summary.push(`Last answer correct: ${attemptSummary.correct ? 'yes' : 'no'}.`);
-    }
-    if (typeof attemptSummary.streak === 'number') {
-      summary.push(`Current streak: ${attemptSummary.streak}.`);
-    }
-    if (summary.length) {
-      details.push(summary.join(' '));
-    }
-  }
-
-  if (!details.length) {
-    return '';
-  }
-
-  return `Context: ${details.join(' ')}`;
+function buildRateHeaders(limit: number, remaining: number) {
+  return {
+    'Cache-Control': 'no-store',
+    'X-RateLimit-Limit': String(limit),
+    'X-RateLimit-Remaining': String(Math.max(0, remaining)),
+  } as Record<string, string>;
 }
 
 export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'Coach service is not configured. Set OPENAI_API_KEY.' },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
@@ -116,42 +58,88 @@ export async function POST(request: Request) {
 
   const parsed = CoachRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request payload', details: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid request payload', details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
-  const data = parsed.data;
-  const mode = data.mode;
-  const context = buildContext({ question: data.question, attemptSummary: data.attemptSummary });
-  const systemPrompt = buildSystemPrompt(mode, context);
+  const payload = parsed.data as CoachRequestPayload;
+  const identifier = getClientIdentifier(request);
+  const rate = await enforceCoachRateLimit(identifier);
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many coach requests. Try again soon.' },
+      {
+        status: 429,
+        headers: {
+          ...buildRateHeaders(rate.limit, 0),
+          'Retry-After': String(Math.max(1, rate.retryAfterSeconds || 60)),
+        },
+      },
+    );
+  }
+
+  const moderationInput = getModerationInput(payload);
+  const moderation = await ensureCoachContentIsSafe(moderationInput);
+  if (!moderation.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Coach cannot respond to that request.',
+        flaggedCategories: moderation.flaggedCategories,
+      },
+      {
+        status: 400,
+        headers: buildRateHeaders(rate.limit, rate.remaining),
+      },
+    );
+  }
+
+  const cacheKey = buildCoachCacheKey(payload);
+  const cached = await getCachedCoachResponse(cacheKey);
+  if (cached) {
+    return NextResponse.json(
+      {
+        message: cached.message,
+        mode: cached.mode,
+        finishReason: cached.finishReason,
+        usage: cached.usage,
+        cached: true,
+        attempts: cached.attempts,
+        latencyMs: 0,
+      },
+      {
+        headers: buildRateHeaders(rate.limit, rate.remaining),
+      },
+    );
+  }
 
   try {
-    const completion = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
-      temperature: MODE_BEHAVIORS[mode].temperature,
-      max_tokens: 512,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...data.messages.map((message) => ({ role: message.role, content: message.content })),
-      ],
-    });
+    const result = await generateCoachCompletion(payload);
+    const entry = createCacheEntry(payload.mode, result);
+    await setCoachCacheResponse(cacheKey, entry);
 
-    const choice = completion.choices?.[0];
-    const responseText = choice?.message?.content?.trim();
-
-    if (!responseText) {
-      return NextResponse.json({ error: 'Coach did not return a response' }, { status: 502 });
-    }
-
-    return NextResponse.json({
-      message: responseText,
-      mode,
-      finishReason: choice.finish_reason,
-      usage: completion.usage,
-    });
+    return NextResponse.json(
+      {
+        ...result,
+        mode: payload.mode,
+        cached: false,
+      },
+      {
+        headers: buildRateHeaders(rate.limit, rate.remaining),
+      },
+    );
   } catch (error) {
     console.error('Coach API error:', error);
-    return NextResponse.json({ error: 'Failed to contact coach' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to contact coach' },
+      {
+        status: 500,
+        headers: buildRateHeaders(rate.limit, rate.remaining),
+      },
+    );
   }
 }
+
+

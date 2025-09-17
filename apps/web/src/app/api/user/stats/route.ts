@@ -14,26 +14,30 @@ type AttemptWithQuestion = {
   };
 };
 
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
 export async function GET(request: NextRequest) {
   try {
-    // Validate optional query params
     const { searchParams } = new URL(request.url);
     const parsed = StatsQuerySchema.safeParse({ recent: searchParams.get('recent') ?? undefined });
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid query parameters', details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const { recent } = parsed.data;
+
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Ensure user exists in database
     await prisma.user.upsert({
       where: { id: user.id },
       update: {},
@@ -43,28 +47,22 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get user profile (XP, level, etc.)
     const profile = await prisma.profile.findUnique({
       where: { userId: user.id },
     });
 
-    console.log('Profile found:', profile);
-    console.log('Profile XP:', profile?.xp);
-
-    // Get attempt statistics
     const [totalAttempts, correctAttempts] = await Promise.all([
       prisma.attempt.count({
         where: { userId: user.id },
       }),
       prisma.attempt.count({
-        where: { 
+        where: {
           userId: user.id,
           correct: true,
         },
       }),
     ]);
 
-    // Get recent attempts with question details
     const recentAttempts = await prisma.attempt.findMany({
       where: { userId: user.id },
       include: {
@@ -79,7 +77,19 @@ export async function GET(request: NextRequest) {
       take: recent,
     });
 
-    // Calculate current level based on XP (100 XP per level)
+    const accuracy = totalAttempts > 0 ? correctAttempts / totalAttempts : null;
+    const averageDifficulty = recentAttempts.length
+      ? recentAttempts.reduce((sum, attempt) => sum + (attempt.question?.difficulty ?? 0), 0) /
+        recentAttempts.length
+      : null;
+
+    let abilityEstimate: number | null = null;
+    if (averageDifficulty !== null || accuracy !== null) {
+      const abilityFromDifficulty = averageDifficulty ?? 0;
+      const abilityFromAccuracy = accuracy !== null ? (accuracy - 0.6) * 3 : 0;
+      abilityEstimate = clamp(abilityFromDifficulty + abilityFromAccuracy, -2.5, 2.5);
+    }
+
     const currentLevel = Math.floor((profile?.xp || 0) / 100) + 1;
 
     const stats = {
@@ -87,6 +97,8 @@ export async function GET(request: NextRequest) {
       correctAttempts,
       xp: profile?.xp || 0,
       currentLevel,
+      accuracy,
+      abilityEstimate,
       recentAttempts: recentAttempts.map((attempt: AttemptWithQuestion) => ({
         id: attempt.id,
         question: {
