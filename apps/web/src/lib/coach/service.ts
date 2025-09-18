@@ -1,6 +1,7 @@
 // apps/web/src/lib/coach/service.ts
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { ResponseCreateParams } from "openai/resources/responses/responses";
 
 export type CoachMode = "hint" | "explain" | "comfort" | "challenge";
 
@@ -197,11 +198,104 @@ function formatUsage(usage?: {
   };
 }
 
-function toResponsesInput(messages: ChatCompletionMessageParam[]) {
-  return messages.map((message) => ({
-    role: message.role,
-    content: [{ type: "text", text: message.content?.toString() ?? "" }],
-  }));
+type ResponsesInputMessage = {
+  role: "user" | "assistant" | "system";
+  content: string;
+};
+
+function normalizeMessageContent(message: ChatCompletionMessageParam) {
+  const { content } = message;
+
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (!content) {
+    return "";
+  }
+
+  if (Array.isArray(content)) {
+    const parts = content
+      .map((part) => {
+        if (typeof part === "string") {
+          return part;
+        }
+
+        if (part && typeof part === "object") {
+          if ("text" in part && typeof part.text === "string") {
+            return part.text;
+          }
+
+          if ("input_text" in part && typeof (part as { input_text?: string }).input_text === "string") {
+            return (part as { input_text?: string }).input_text ?? "";
+          }
+
+          if ("output_text" in part && typeof (part as { output_text?: string }).output_text === "string") {
+            return (part as { output_text?: string }).output_text ?? "";
+          }
+
+          if ("image_url" in part) {
+            const imageUrl =
+              typeof part.image_url === "string"
+                ? part.image_url
+                : typeof part.image_url?.url === "string"
+                  ? part.image_url.url
+                  : null;
+
+            if (imageUrl) {
+              return `[Image: ${imageUrl}]`;
+            }
+          }
+        }
+
+        return "";
+      })
+      .filter((segment) => typeof segment === "string" && segment.trim().length > 0);
+
+    return parts.join("\n");
+  }
+
+  return "";
+}
+
+
+function responsesSupportsTemperature(model: string) {
+  return !model.toLowerCase().startsWith("gpt-5");
+}
+
+function toResponsesInput(messages: ChatCompletionMessageParam[]): ResponsesInputMessage[] {
+  return messages
+    .map((message) => {
+      if (message.role === "system") {
+        return null;
+      }
+
+      const text = normalizeMessageContent(message).trim();
+      if (!text) {
+        return null;
+      }
+
+      const role: ResponsesInputMessage["role"] =
+        message.role === "assistant" || message.role === "system" || message.role === "user"
+          ? message.role
+          : "assistant";
+
+      return {
+        role,
+        content: text,
+      };
+    })
+    .filter((entry): entry is ResponsesInputMessage => entry !== null);
+}
+
+function extractInstructions(messages: ChatCompletionMessageParam[]) {
+  const systemMessage = messages.find((message) => message.role === "system");
+  if (!systemMessage) {
+    return undefined;
+  }
+
+  const instruction = normalizeMessageContent(systemMessage).trim();
+  return instruction.length > 0 ? instruction : undefined;
 }
 
 export async function generateCoachCompletion(payload: CoachRequestPayload): Promise<CoachCompletionResult> {
@@ -214,12 +308,36 @@ export async function generateCoachCompletion(payload: CoachRequestPayload): Pro
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       if (USE_RESPONSES_API) {
-        const response = await client.responses.create({
+        let conversationInput = toResponsesInput(messages);
+        const instructions = extractInstructions(messages);
+
+        if (!conversationInput.length) {
+          const fallbackContent = payload.messages[payload.messages.length - 1]?.content?.trim();
+          conversationInput = [
+            {
+              role: "user" as const,
+              content: fallbackContent && fallbackContent.length > 0
+                ? fallbackContent
+                : "I need help with SAT math practice.",
+            },
+          ];
+        }
+
+        const responsesPayload: ResponseCreateParams = {
           model: DEFAULT_MODEL,
-          input: toResponsesInput(messages),
-          temperature,
+          input: conversationInput,
           max_output_tokens: 512,
-        });
+        };
+
+        if (instructions) {
+          responsesPayload.instructions = instructions;
+        }
+
+        if (responsesSupportsTemperature(DEFAULT_MODEL)) {
+          responsesPayload.temperature = temperature;
+        }
+
+        const response = await client.responses.create(responsesPayload);
 
         const responseText = response.output_text?.trim();
         if (!responseText) {

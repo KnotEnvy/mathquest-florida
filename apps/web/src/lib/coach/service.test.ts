@@ -110,6 +110,20 @@ describe("coach service", () => {
 
     expect(responsesMock).toHaveBeenCalledTimes(1);
     expect(createMock).not.toHaveBeenCalled();
+    expect(responsesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: expect.stringContaining("MathQuest Coach"),
+        input: expect.arrayContaining([
+          expect.objectContaining({ role: "user", content: expect.stringContaining("Help me solve 2x + 3 = 11") }),
+        ]),
+      }),
+    );
+    const requestPayload = responsesMock.mock.calls[0]?.[0] as {
+      input?: Array<{ role: string; content: string }>;
+    };
+    expect(requestPayload).toBeDefined();
+    expect(requestPayload?.input?.length).toBeGreaterThan(0);
+    expect(requestPayload).not.toHaveProperty("temperature");
     expect(result.message).toBe("Try isolating x.");
     expect(result.usage).toEqual({ promptTokens: 12, completionTokens: 25, totalTokens: 37 });
   });
