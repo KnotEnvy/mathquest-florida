@@ -309,7 +309,7 @@ async function main() {
         correctAnswer: '8',
         explanation: 'For 6 numbers, median is average of 3rd and 4th values: (8 + 8)/2 = 8.',
       },
-      domain: 'Problem-Solving & Data Analysis',
+      domain: 'Problem Solving & Data Analysis',
       subdomain: 'Statistics',
       difficulty: -0.1,
       tags: ['median', 'statistics', 'data-analysis'],
@@ -322,7 +322,7 @@ async function main() {
         correctAnswer: '72',
         explanation: 'Let x be the number. 0.25x = 18. Divide both sides by 0.25: x = 18/0.25 = 72.',
       },
-      domain: 'Problem-Solving & Data Analysis',
+      domain: 'Problem Solving & Data Analysis',
       subdomain: 'Percentages',
       difficulty: 0.1,
       tags: ['percentages', 'proportions', 'problem-solving'],
@@ -829,6 +829,645 @@ async function main() {
       subdomain: 'Coordinate Geometry',
       difficulty: 0.8,
       tags: ['distance-formula', 'coordinate-geometry', 'geometry'],
+    },
+
+    // ALGEBRA - Expansion Final
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Solve |3x - 7| = 2x + 5. What is the sum of all real solutions?',
+        choices: ['12/5', '62/5', '13', '65/4'],
+        correctAnswer: '62/5',
+        explanation: 'Solving the absolute value equation gives x = 12 and x = 2/5. The sum is 62/5.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Absolute Value Equations',
+      difficulty: 1.0,
+      tags: ['absolute-value', 'equations', 'algebra'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'Let x and y satisfy x + y = 5 and xy = 3. What is x^3 + y^3?',
+        correctAnswer: '80',
+        explanation: 'Use the identity x^3 + y^3 = (x + y)^3 - 3xy(x + y) = 125 - 45 = 80.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Polynomial Relationships',
+      difficulty: 0.7,
+      tags: ['vieta', 'symmetry', 'algebra'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Which expression is equivalent to (x^3 - 27)/(x - 3)?',
+        choices: ['x^2 + 3x + 9', 'x^2 - 3x + 9', 'x^2 + 9', 'x^2 - 9'],
+        correctAnswer: 'x^2 + 3x + 9',
+        explanation: 'Apply synthetic division or the difference of cubes to obtain x^2 + 3x + 9.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Polynomials',
+      difficulty: 0.4,
+      tags: ['polynomials', 'factoring', 'algebra'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Solve x^2 - 5x + 4 <= 0. Which interval describes the solution set?',
+        choices: ['x <= 1 or x >= 4', '1 <= x <= 4', 'x < 1 or x > 4', 'x >= 4'],
+        correctAnswer: '1 <= x <= 4',
+        explanation: 'Factor to (x - 1)(x - 4) <= 0, which holds for 1 <= x <= 4.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Quadratic Inequalities',
+      difficulty: 0.6,
+      tags: ['quadratics', 'inequalities', 'intervals'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'Solve 2^(3x - 1) = 32. What is x?',
+        correctAnswer: '2',
+        explanation: 'Since 32 = 2^5, we have 3x - 1 = 5, so x = 2.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Exponential Equations',
+      difficulty: 0.5,
+      tags: ['exponential', 'equations', 'powers'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'The parabola y = a(x - 2)^2 - 3 passes through (0, 5). What is the value of a?',
+        choices: ['-2', '-1', '2', '4'],
+        correctAnswer: '2',
+        explanation: 'Substitute (0, 5): 5 = a(4) - 3, so a = 2.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Quadratic Functions',
+      difficulty: 0.7,
+      tags: ['parabolas', 'vertex-form', 'algebra'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'For the arithmetic sequence a_n = 4 + 3(n - 1), what is the smallest n such that a_n >= 40?',
+        correctAnswer: '13',
+        explanation: 'Solve 4 + 3(n - 1) >= 40 to get n >= 13.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Sequences',
+      difficulty: 0.6,
+      tags: ['arithmetic-sequences', 'inequalities', 'algebra'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Simplify (3x^2 - 12x + 12)/(3x - 6) for x not equal to 2.',
+        choices: ['x - 2', 'x + 2', '3x - 6', 'x^2 - 4'],
+        correctAnswer: 'x - 2',
+        explanation: 'Factor numerator and denominator: (3(x - 2)^2)/(3(x - 2)) = x - 2.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Rational Expressions',
+      difficulty: 0.5,
+      tags: ['simplifying', 'rational-expressions', 'algebra'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'Let f(x) = (2x - 5)/(x + 1) for x not equal to -1. What is f^{-1}(3)?',
+        correctAnswer: '-8',
+        explanation: 'Set 3 = (2x - 5)/(x + 1). Solving gives x = -8.',
+      },
+      domain: 'Algebra',
+      subdomain: 'Functions',
+      difficulty: 0.8,
+      tags: ['inverse-functions', 'rational-functions', 'algebra'],
+    },
+
+    // ADVANCED MATH - Expansion Final
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'Solve log_3(x + 1) - log_3(x - 2) = 2. What is x?',
+        correctAnswer: '19/8',
+        explanation: 'Combine logs to get (x + 1)/(x - 2) = 9, yielding x = 19/8.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Logarithms',
+      difficulty: 1.2,
+      tags: ['logarithms', 'equations', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Solve 3^(2x) = 5 * 3^x. What is x?',
+        choices: ['log_3(5)', 'log_5(3)', '5', '1/5'],
+        correctAnswer: 'log_3(5)',
+        explanation: 'Divide both sides by 3^x to get 3^x = 5, so x = log_3(5).',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Exponential Functions',
+      difficulty: 1.0,
+      tags: ['exponentials', 'logs', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'For f(x) = sqrt(4x - 7), what is the domain of f?',
+        choices: ['x >= 7/4', 'x > -7/4', 'x <= 7/4', 'all real x'],
+        correctAnswer: 'x >= 7/4',
+        explanation: 'Require 4x - 7 >= 0, so x >= 7/4.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Functions',
+      difficulty: 0.6,
+      tags: ['radicals', 'domain', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'A geometric sequence has a_1 = 6 and common ratio 2/3. What is a_5?',
+        correctAnswer: '32/27',
+        explanation: 'Compute a_5 = 6 * (2/3)^4 = 32/27.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Sequences',
+      difficulty: 0.8,
+      tags: ['geometric-sequences', 'exponents', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'If f(x) = x^2 - 4x and g(x) = 3x + 1, what is (f \circ g)(2)?',
+        choices: ['12', '18', '21', '25'],
+        correctAnswer: '21',
+        explanation: 'g(2) = 7 and f(7) = 49 - 28 = 21.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Functions',
+      difficulty: 0.5,
+      tags: ['composition', 'functions', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'What is the horizontal asymptote of f(x) = (2x^2 - 3x + 1)/(x^2 + x - 2)?',
+        choices: ['y = 0', 'y = 1', 'y = 2', 'y = 3'],
+        correctAnswer: 'y = 2',
+        explanation: 'The ratio of leading coefficients is 2/1, giving horizontal asymptote y = 2.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Rational Functions',
+      difficulty: 0.9,
+      tags: ['asymptotes', 'rational-functions', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Which function represents shifting y = x^2 three units right and two units up?',
+        choices: ['(x + 3)^2 + 2', '(x - 3)^2 + 2', '(x - 3)^2 - 2', '(x + 3)^2 - 2'],
+        correctAnswer: '(x - 3)^2 + 2',
+        explanation: 'A right shift replaces x with x - 3 and a vertical shift adds 2.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Functions',
+      difficulty: 0.5,
+      tags: ['transformations', 'parabolas', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'The sequence defined by a_1 = 4 and a_{n+1} = (a_n + 6)/2 approaches which value?',
+        correctAnswer: '6',
+        explanation: 'Fixed point L satisfies L = (L + 6)/2, so L = 6.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Sequences',
+      difficulty: 1.1,
+      tags: ['recursive', 'limits', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Let equation x^4 - 5x^2 + 4 = 0 have real solutions r. What is the product of all distinct real solutions?',
+        choices: ['-4', '-2', '2', '4'],
+        correctAnswer: '4',
+        explanation: 'Factor to (x - 2)(x + 2)(x - 1)(x + 1). The product (-2)(-1)(1)(2) = 4.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Polynomial Relationships',
+      difficulty: 1.0,
+      tags: ['quartics', 'factoring', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Given f(x) = 2x + 1 for x <= -1 and f(x) = x^2 for x > -1, what is f(-3) + f(2)?',
+        choices: ['-1', '1', '3', '5'],
+        correctAnswer: '-1',
+        explanation: 'Evaluate f(-3) = -5 and f(2) = 4, so the sum is -1.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Piecewise Functions',
+      difficulty: 0.6,
+      tags: ['piecewise', 'evaluation', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'If x + y = 5 and x^2 + y^2 = 29, what is xy?',
+        correctAnswer: '-2',
+        explanation: 'Use (x + y)^2 = x^2 + y^2 + 2xy to solve for xy = -2.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Systems of Equations',
+      difficulty: 0.9,
+      tags: ['systems', 'identities', 'advanced-math'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'For f(x) = sqrt(g(x)) with g(x) = x^2 - 9, what is the domain of f(g(x))?',
+        choices: ['|x| >= 3', '|x| >= 2', 'x >= -3', 'all real x'],
+        correctAnswer: '|x| >= 3',
+        explanation: 'Require x^2 - 9 >= 0, so x <= -3 or x >= 3.',
+      },
+      domain: 'Advanced Math',
+      subdomain: 'Composite Functions',
+      difficulty: 1.0,
+      tags: ['composition', 'domain', 'advanced-math'],
+    },
+
+    // PROBLEM SOLVING & DATA ANALYSIS - Expansion Final
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: "A class of 12 girls and 8 boys has an overall test average of 78. If the girls average 82, what is the boys' average score?",
+        choices: ['68', '70', '72', '74'],
+        correctAnswer: '72',
+        explanation: "Total points are 20 * 78 = 1560. Girls contribute 12 * 82 = 984, leaving 576 for boys. The boys' average is 576/8 = 72.",
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Statistics',
+      difficulty: 0.7,
+      tags: ['weighted-average', 'statistics', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'In a survey, 45% prefer option A, 30% prefer option B, and the rest prefer option C. If 360 people prefer option C, how many people were surveyed?',
+        correctAnswer: '1440',
+        explanation: 'Option C represents 25%, so total participants are 360 / 0.25 = 1440.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: 0.8,
+      tags: ['percentages', 'surveys', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'A bag has 5 red, 4 blue, and 3 green marbles. Two marbles are drawn without replacement. What is the probability both are red?',
+        choices: ['1/6', '1/5', '5/33', '5/18'],
+        correctAnswer: '5/33',
+        explanation: 'Probability is (5/12) * (4/11) = 20/132 = 5/33.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Probability',
+      difficulty: 0.9,
+      tags: ['probability', 'combinatorics', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'A car travels 120 miles at 40 miles per hour and returns 120 miles at 60 miles per hour. What is the average speed for the round trip?',
+        correctAnswer: '48',
+        explanation: 'Average speed is total distance 240 divided by total time (3 + 2 hours) = 48 mph.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Rates',
+      difficulty: 0.9,
+      tags: ['rates', 'average-speed', 'word-problems'],
+    },
+
+
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: 0.6,
+      tags: ['percent-change', 'discounts', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'The mean of the numbers 4, 8, 12, 15, and x is 10. What is x?',
+        correctAnswer: '11',
+        explanation: 'The sum must be 50. Since 4 + 8 + 12 + 15 = 39, we have x = 11.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Statistics',
+      difficulty: 0.5,
+      tags: ['mean', 'algebra', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: "A company's revenue grows from 2.4 million dollars to 3.3 million dollars. What is the percent increase?",
+        choices: ['25%', '33%', '37.5%', '40%'],
+        correctAnswer: '37.5%',
+        explanation: 'Increase is 0.9 million; divide by 2.4 million to obtain 0.375 = 37.5%.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: 0.7,
+      tags: ['percent-change', 'finance', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'A 5 kilogram solution is 30% sugar. How many kilograms of pure sugar must be added to make the solution 40% sugar?',
+        correctAnswer: '5/6',
+        explanation: 'Start with 1.5 kg sugar. Solve (1.5 + x)/(5 + x) = 0.40 to get x = 5/6.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: 1.0,
+      tags: ['mixtures', 'percentages', 'algebra'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'A jar contains 6 yellow and 4 white marbles. Two marbles are drawn without replacement. What is the probability they are different colors?',
+        choices: ['12/45', '8/15', '2/5', '3/5'],
+        correctAnswer: '8/15',
+        explanation: 'Probability different colors = 2 * (6/10)*(4/9) = 48/90 = 8/15.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Probability',
+      difficulty: 0.8,
+      tags: ['probability', 'combinatorics', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'Originally 40% of students passed an exam. After 30 more students pass, the pass rate becomes 50%. How many students were originally in the group?',
+        correctAnswer: '300',
+        explanation: 'Let total be T. Then 0.4T + 30 = 0.5T, so T = 300.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Statistics',
+      difficulty: 1.1,
+      tags: ['percentages', 'algebra', 'data-analysis'],
+    },
+
+
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Statistics',
+      difficulty: 0.5,
+      tags: ['quartiles', 'spread', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'Notebooks cost 2.50 dollars each plus 7% sales tax. If the total cost is 53.50 dollars, how many notebooks were bought?',
+        correctAnswer: '20',
+        explanation: 'Solve 2.50n * 1.07 = 53.50 to get n = 20.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: 0.8,
+      tags: ['sales-tax', 'percentages', 'data-analysis'],
+    },
+
+
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Probability',
+      difficulty: 0.9,
+      tags: ['probability', 'complements', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: "A company's profit decreases by 12% one year and increases by 20% the next year. What is the overall percent change?",
+        correctAnswer: '5.6',
+        explanation: 'Multiply factors 0.88 and 1.20 to get 1.056, a 5.6% increase.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Percentages',
+      difficulty: 1.0,
+      tags: ['percent-change', 'compounding', 'data-analysis'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Five numbers have a mean of 14. Removing one number leaves a mean of 12 for the remaining four numbers. What number was removed?',
+        choices: ['18', '20', '22', '26'],
+        correctAnswer: '22',
+        explanation: 'Total is 5 * 14 = 70. Remaining sum is 4 * 12 = 48, so the removed number is 22.',
+      },
+      domain: 'Problem Solving & Data Analysis',
+      subdomain: 'Statistics',
+      difficulty: 0.6,
+      tags: ['mean', 'statistics', 'data-analysis'],
+    },
+
+    // GEOMETRY & TRIGONOMETRY - Expansion Final
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'A trapezoid has bases 8 and 14 and height 6. What is its area?',
+        choices: ['54', '60', '66', '72'],
+        correctAnswer: '66',
+        explanation: 'Area = ((8 + 14)/2) * 6 = 66.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Area and Perimeter',
+      difficulty: 0.6,
+      tags: ['trapezoids', 'area', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'What is the circumference of a circle with radius 5 expressed in terms of pi?',
+        correctAnswer: '10pi',
+        explanation: 'Circumference = 2 * pi * 5 = 10pi.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Circles',
+      difficulty: 0.4,
+      tags: ['circles', 'circumference', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'A rectangular prism measures 3 by 4 by 12 units. What is the length of its space diagonal?',
+        correctAnswer: '13',
+        explanation: 'Diagonal = sqrt(3^2 + 4^2 + 12^2) = sqrt(169) = 13.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Three-Dimensional Figures',
+      difficulty: 0.8,
+      tags: ['3d-geometry', 'diagonals', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'In a right triangle with legs 7 and 24, what is sin of the angle opposite the side of length 7?',
+        choices: ['7/24', '7/25', '24/25', '25/7'],
+        correctAnswer: '7/25',
+        explanation: 'The hypotenuse is 25, so sin(theta) = opposite/hypotenuse = 7/25.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Right Triangles',
+      difficulty: 0.7,
+      tags: ['trigonometry', 'right-triangles', 'ratios'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'An equilateral triangle has area 16sqrt(3). What is the side length?',
+        choices: ['4', '6', '8', '12'],
+        correctAnswer: '8',
+        explanation: 'Area = (sqrt(3)/4)s^2. Setting equal to 16sqrt(3) gives s^2 = 64, so s = 8.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Triangles',
+      difficulty: 0.9,
+      tags: ['equilateral', 'area', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'Find the area of the triangle with vertices (2, 3), (8, 3), and (2, 9).',
+        correctAnswer: '18',
+        explanation: 'The triangle is right with legs 6. Area = (1/2)*6*6 = 18.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Coordinate Geometry',
+      difficulty: 0.7,
+      tags: ['coordinate-geometry', 'area', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'What is the arc length subtended by a 75 degree central angle in a circle of radius 12?',
+        choices: ['5pi', '6pi', '8pi', '10pi'],
+        correctAnswer: '5pi',
+        explanation: 'Arc length = (75/360) * 2 * pi * 12 = 5pi.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Circles',
+      difficulty: 0.8,
+      tags: ['arc-length', 'circles', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'If tan(theta) = 3/4 with theta in quadrant I, what is sec(theta)?',
+        choices: ['3/4', '4/3', '5/4', '4/5'],
+        correctAnswer: '5/4',
+        explanation: 'Construct a right triangle with opposite 3 and adjacent 4, giving hypotenuse 5 and sec(theta) = 5/4.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Trigonometric Ratios',
+      difficulty: 0.7,
+      tags: ['trigonometry', 'ratios', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'What is the distance between the points (-3, 4) and (5, -2)?',
+        correctAnswer: '10',
+        explanation: 'Distance = sqrt((8)^2 + (-6)^2) = 10.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Coordinate Geometry',
+      difficulty: 0.5,
+      tags: ['distance', 'coordinate-geometry', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'What is the volume of a sphere with radius 4 expressed in terms of pi?',
+        choices: ['64pi/3', '128pi/3', '256pi/3', '512pi/3'],
+        correctAnswer: '256pi/3',
+        explanation: 'Volume = (4/3) * pi * 4^3 = 256pi/3.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Three-Dimensional Figures',
+      difficulty: 0.8,
+      tags: ['spheres', 'volume', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'grid-in',
+        question: 'A cone has radius 6 and slant height 10. What is its total surface area in terms of pi?',
+        correctAnswer: '96pi',
+        explanation: 'Surface area = pi*r*l + pi*r^2 = 60pi + 36pi = 96pi.',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Three-Dimensional Figures',
+      difficulty: 1.0,
+      tags: ['cones', 'surface-area', 'geometry'],
+    },
+
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'Points P(1, 5), Q(5, 1), and R(1, 1) form triangle PQR. What is the length of PQ?',
+        choices: ['4', '4sqrt(2)', '6', '8'],
+        correctAnswer: '4sqrt(2)',
+        explanation: 'Use the distance formula: sqrt((5 - 1)^2 + (1 - 5)^2) = 4sqrt(2).',
+      },
+      domain: 'Geometry & Trigonometry',
+      subdomain: 'Coordinate Geometry',
+      difficulty: 0.8,
+      tags: ['distance', 'coordinate-geometry', 'geometry'],
     },
 
   ];

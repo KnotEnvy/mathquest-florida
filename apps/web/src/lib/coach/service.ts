@@ -199,7 +199,7 @@ function formatUsage(usage?: {
 }
 
 type ResponsesInputMessage = {
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant";
   content: string;
 };
 
@@ -264,38 +264,37 @@ function responsesSupportsTemperature(model: string) {
 }
 
 function toResponsesInput(messages: ChatCompletionMessageParam[]): ResponsesInputMessage[] {
-  return messages
-    .map((message) => {
-      if (message.role === "system") {
-        return null;
-      }
+  const prepared: ResponsesInputMessage[] = [];
 
-      const text = normalizeMessageContent(message).trim();
-      if (!text) {
-        return null;
-      }
+  for (const message of messages) {
+    if (message.role !== "user" && message.role !== "assistant") {
+      continue;
+    }
 
-      const role: ResponsesInputMessage["role"] =
-        message.role === "assistant" || message.role === "system" || message.role === "user"
-          ? message.role
-          : "assistant";
+    const text = normalizeMessageContent(message).trim();
+    if (!text) {
+      continue;
+    }
 
-      return {
-        role,
-        content: text,
-      };
-    })
-    .filter((entry): entry is ResponsesInputMessage => entry !== null);
+    prepared.push({ role: message.role, content: text });
+  }
+
+  return prepared;
 }
 
 function extractInstructions(messages: ChatCompletionMessageParam[]) {
-  const systemMessage = messages.find((message) => message.role === "system");
-  if (!systemMessage) {
-    return undefined;
+  for (const message of messages) {
+    if ((message as { role: string }).role === "system") {
+      const instruction = normalizeMessageContent(message).trim();
+      if (instruction.length > 0) {
+        return instruction;
+      }
+
+      break;
+    }
   }
 
-  const instruction = normalizeMessageContent(systemMessage).trim();
-  return instruction.length > 0 ? instruction : undefined;
+  return undefined;
 }
 
 export async function generateCoachCompletion(payload: CoachRequestPayload): Promise<CoachCompletionResult> {
@@ -344,8 +343,7 @@ export async function generateCoachCompletion(payload: CoachRequestPayload): Pro
           throw new Error("Coach returned an empty response");
         }
 
-        const finishReason =
-          (response.output && response.output[response.output.length - 1]?.finish_reason) ?? null;
+        const finishReason = null;
 
         return {
           message: responseText,
