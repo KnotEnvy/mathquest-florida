@@ -93,7 +93,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-8 shadow-lg">
           <div className="text-center space-y-3">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-              <span className="text-emerald-600">?</span>
+              <span className="text-emerald-600">âœ“</span>
             </div>
             <h2 className="text-3xl font-bold text-gray-900">Check your email</h2>
             <p className="text-gray-600">
@@ -269,9 +269,9 @@ export default function RegisterPage() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-purple-900">What happens next?</h3>
               <ul className="space-y-3 text-sm text-purple-800">
-                <li>• Confirm your email and you&apos;ll land on your first adaptive quest.</li>
-                <li>• Invite parents or tutors anytime—multi-user households share progress automatically.</li>
-                <li>• Need help? Use the in-app coach or email support@mathquest.app.</li>
+                <li>âœ“ Confirm your email and you&apos;ll land on your first adaptive quest.</li>
+                <li>âœ“ Invite parents or tutors anytimeâ€”multi-user households share progress automatically.</li>
+                <li>âœ“ Need help? Use the in-app coach or email support@mathquest.app.</li>
               </ul>
             </div>
             <div className="rounded-xl border border-purple-200 bg-white/80 p-4 text-sm text-purple-800 shadow-sm">
