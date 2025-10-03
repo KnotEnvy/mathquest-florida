@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     const accuracy = totalAttempts > 0 ? correctAttempts / totalAttempts : null;
     const averageDifficulty = recentAttempts.length
-      ? recentAttempts.reduce((sum: number, attempt) => sum + (attempt.question?.difficulty ?? 0), 0) /
+      ? recentAttempts.reduce((sum: number, attempt: typeof recentAttempts[0]) => sum + (attempt.question?.difficulty ?? 0), 0) /
         recentAttempts.length
       : null;
 
