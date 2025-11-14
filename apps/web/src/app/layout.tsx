@@ -3,6 +3,16 @@ import type { Metadata } from 'next';
 import { Inter, Nunito_Sans } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
+
+function resolveSiteUrl() {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_URL ?? 'http://localhost:3000';
+  if (envUrl.startsWith('http://') || envUrl.startsWith('https://')) {
+    return envUrl;
+  }
+  return `https://${envUrl}`;
+}
+
+const siteUrl = resolveSiteUrl();
 const inter = Inter({ 
   subsets: ['latin'],
   variable: '--font-inter',
@@ -16,6 +26,10 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: siteUrl,
+  },
   title: 'MathQuest Florida - Turn Test Jitters into Daily Wins',
   description: 'AI-powered gamified math tutor for SAT and Florida college readiness exams',
   keywords: ['SAT prep', 'math tutor', 'PERT exam', 'Florida education', 'AI tutor'],
@@ -23,6 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'MathQuest Florida',
     description: 'Transform math anxiety into daily achievement',
+    url: siteUrl,
     images: ['/og-image.png'],
   },
 };

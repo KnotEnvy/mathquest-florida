@@ -1,7 +1,6 @@
 // apps/web/src/lib/coach/service.ts
 import OpenAI from "openai";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import type { ResponseCreateParams } from "openai/resources/responses/responses";
+import type { Response as OpenAIResponse, ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
 
 export type CoachMode = "hint" | "explain" | "comfort" | "challenge";
 
@@ -46,26 +45,41 @@ export interface CoachCompletionResult {
   latencyMs: number;
 }
 
-const MODE_BEHAVIORS: Record<CoachMode, { guidance: string; temperature: number }> = {
+const MODE_BEHAVIORS: Record<
+  CoachMode,
+  { guidance: string; coachingBehaviors: string[] }
+> = {
   hint: {
     guidance:
-      "Offer a concise hint that nudges the student toward the next logical step without giving away the full solution. Encourage them to show their work.",
-    temperature: 0.3,
+      "Offer a concise hint that nudges the student toward the next logical step without giving away the full solution.",
+    coachingBehaviors: [
+      "Ask the student to share their next step so you can confirm they are on track.",
+      "Point to one specific strategy (isolating variables, drawing a diagram, etc.) rather than restating the prompt.",
+    ],
   },
   explain: {
     guidance:
-      "Deliver a complete step-by-step explanation with clear reasoning and math notation. Tie the concept back to SAT Math framing where possible.",
-    temperature: 0.2,
+      "Deliver a complete step-by-step explanation with clear reasoning and math notation.",
+    coachingBehaviors: [
+      "Reference the SAT or PERT framing so learners see why the skill matters.",
+      "Explicitly call out the concept being used before each step (e.g., Distributive Property, Factoring).",
+    ],
   },
   comfort: {
     guidance:
-      "Lead with empathy and encouragement. Normalize struggle, reflect their effort, and offer a reassuring next action. Keep math guidance lightweight.",
-    temperature: 0.6,
+      "Lead with empathy and encouragement. Normalize struggle, reflect their effort, and offer a reassuring next action.",
+    coachingBehaviors: [
+      "Mirror the learner's feelings before offering guidance.",
+      "Offer one calming action item (deep breath, write out knowns) before any math advice.",
+    ],
   },
   challenge: {
     guidance:
       "Push the student to think deeper. Ask follow-up questions, highlight patterns, and suggest strategies that raise the difficulty slightly.",
-    temperature: 0.5,
+    coachingBehaviors: [
+      "Turn your response into 1-2 probing questions before sharing any solution steps.",
+      "Suggest a variation of the current problem that uses the same concept at a harder level.",
+    ],
   },
 };
 
@@ -139,33 +153,17 @@ function buildContextDetails({
   return `Context: ${details.join(" ")}`;
 }
 
-function buildSystemPrompt(mode: CoachMode, contextDetails: string) {
-  const persona = MODE_BEHAVIORS[mode];
-  return [
-    SYSTEM_PREAMBLE,
-    persona.guidance,
-    "Keep responses under 180 words, use friendly language, and include LaTeX for math when useful.",
-    contextDetails,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function toOpenAIMessages(payload: CoachRequestPayload) {
-  const contextDetails = buildContextDetails(payload);
-  const systemPrompt = buildSystemPrompt(payload.mode, contextDetails);
-
-  const preparedMessages: ChatCompletionMessageParam[] = [
-    { role: "system", content: systemPrompt },
-    ...payload.messages.map((message) => ({ role: message.role, content: message.content })),
-  ];
-
-  return preparedMessages;
-}
-
-const DEFAULT_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
-const USE_RESPONSES_API = DEFAULT_MODEL.startsWith("gpt-5");
+const DEFAULT_MODEL = process.env.OPENAI_MODEL ?? "gpt-5.0-mini";
 const MAX_RETRIES = Number.parseInt(process.env.COACH_MAX_RETRIES ?? "2", 10);
+const RESPONSE_COMPLETION_TIMEOUT_MS = Number.parseInt(
+  process.env.COACH_RESPONSE_TIMEOUT_MS ?? "20000",
+  10,
+);
+const RESPONSE_POLL_INTERVAL_MS = Number.parseInt(
+  process.env.COACH_RESPONSE_POLL_INTERVAL_MS ?? "500",
+  10,
+);
+const PENDING_RESPONSE_STATUSES = new Set(["in_progress", "queued"]);
 
 async function delay(ms: number) {
   await new Promise((resolve) => {
@@ -198,187 +196,177 @@ function formatUsage(usage?: {
   };
 }
 
+function extractResponseText(response: OpenAIResponse) {
+  const direct = response.output_text?.trim();
+  if (direct && direct.length > 0) {
+    return direct;
+  }
+
+  const collected: string[] = [];
+  const pushText = (value?: string | null) => {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        collected.push(trimmed);
+      }
+    }
+  };
+
+  for (const item of response.output ?? []) {
+    if (!item) {
+      continue;
+    }
+
+    const itemType = (item as { type?: string }).type;
+    if (itemType === "output_text") {
+      pushText((item as { text?: string }).text);
+      continue;
+    }
+
+    if (item.type === "message") {
+      for (const content of item.content ?? []) {
+        if (!content) {
+          continue;
+        }
+
+        if (content.type === "output_text") {
+          pushText(content.text);
+        } else if (content.type === "refusal") {
+          pushText(content.refusal);
+        }
+      }
+    }
+  }
+
+  if (!collected.length) {
+    return null;
+  }
+
+  const combined = collected.join("\n").trim();
+  return combined.length > 0 ? combined : null;
+}
+
 type ResponsesInputMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
-function normalizeMessageContent(message: ChatCompletionMessageParam) {
-  const { content } = message;
-
-  if (typeof content === "string") {
-    return content;
+function isPendingStatus(status?: string | null) {
+  if (!status) {
+    return false;
   }
-
-  if (!content) {
-    return "";
-  }
-
-  if (Array.isArray(content)) {
-    const parts = content
-      .map((part) => {
-        if (typeof part === "string") {
-          return part;
-        }
-
-        if (part && typeof part === "object") {
-          if ("text" in part && typeof part.text === "string") {
-            return part.text;
-          }
-
-          if ("input_text" in part && typeof (part as { input_text?: string }).input_text === "string") {
-            return (part as { input_text?: string }).input_text ?? "";
-          }
-
-          if ("output_text" in part && typeof (part as { output_text?: string }).output_text === "string") {
-            return (part as { output_text?: string }).output_text ?? "";
-          }
-
-          if ("image_url" in part) {
-            const imageUrl =
-              typeof part.image_url === "string"
-                ? part.image_url
-                : typeof part.image_url?.url === "string"
-                  ? part.image_url.url
-                  : null;
-
-            if (imageUrl) {
-              return `[Image: ${imageUrl}]`;
-            }
-          }
-        }
-
-        return "";
-      })
-      .filter((segment) => typeof segment === "string" && segment.trim().length > 0);
-
-    return parts.join("\n");
-  }
-
-  return "";
+  return PENDING_RESPONSE_STATUSES.has(status);
 }
 
+async function fetchCompletedResponse(client: OpenAI, payload: ResponseCreateParamsNonStreaming) {
+  let response = await client.responses.create(payload);
 
-function responsesSupportsTemperature(model: string) {
-  return !model.toLowerCase().startsWith("gpt-5");
-}
-
-function toResponsesInput(messages: ChatCompletionMessageParam[]): ResponsesInputMessage[] {
-  const prepared: ResponsesInputMessage[] = [];
-
-  for (const message of messages) {
-    if (message.role !== "user" && message.role !== "assistant") {
-      continue;
-    }
-
-    const text = normalizeMessageContent(message).trim();
-    if (!text) {
-      continue;
-    }
-
-    prepared.push({ role: message.role, content: text });
+  if (!response.id || !isPendingStatus(response.status)) {
+    return response;
   }
 
-  return prepared;
-}
+  const deadline = Date.now() + RESPONSE_COMPLETION_TIMEOUT_MS;
 
-function extractInstructions(messages: ChatCompletionMessageParam[]) {
-  for (const message of messages) {
-    if ((message as { role: string }).role === "system") {
-      const instruction = normalizeMessageContent(message).trim();
-      if (instruction.length > 0) {
-        return instruction;
-      }
-
-      break;
+  while (isPendingStatus(response.status)) {
+    if (Date.now() >= deadline) {
+      throw new Error("Coach response timed out before completion");
     }
+
+    await delay(RESPONSE_POLL_INTERVAL_MS);
+    response = await client.responses.retrieve(response.id);
   }
 
-  return undefined;
+  if (response.status && response.status !== "completed") {
+    const errorMessage = response.error?.message ?? `Coach response failed with status ${response.status}`;
+    throw new Error(errorMessage);
+  }
+
+  return response;
+}
+
+function buildExternalSystemInstructions(messages: CoachMessage[]) {
+  return messages
+    .filter((message) => message.role === "system")
+    .map((message) => message.content.trim())
+    .filter((content) => content.length > 0);
+}
+
+function buildCoachInstructions(payload: CoachRequestPayload) {
+  const contextDetails = buildContextDetails(payload);
+  const persona = MODE_BEHAVIORS[payload.mode];
+  const extraSystemPrompts = buildExternalSystemInstructions(payload.messages);
+
+  return [
+    SYSTEM_PREAMBLE,
+    persona.guidance,
+    ...persona.coachingBehaviors,
+    "Keep responses under 180 words, use warm language, and include LaTeX syntax for math steps when helpful.",
+    "End with a quick call-to-action so the learner knows what to try next.",
+    contextDetails,
+    ...extraSystemPrompts,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function buildResponsesInput(payload: CoachRequestPayload): ResponsesInputMessage[] {
+  return payload.messages
+    .filter((message): message is CoachMessage & { role: "user" | "assistant" } => {
+      return message.role === "user" || message.role === "assistant";
+    })
+    .map((message) => ({ role: message.role, content: message.content.trim() }))
+    .filter((message) => message.content.length > 0);
 }
 
 export async function generateCoachCompletion(payload: CoachRequestPayload): Promise<CoachCompletionResult> {
   const client = getCoachClient();
-  const messages = toOpenAIMessages(payload);
-  const { temperature } = MODE_BEHAVIORS[payload.mode];
+  const instructions = buildCoachInstructions(payload);
+  const baseInput = buildResponsesInput(payload);
   const start = Date.now();
   const maxAttempts = Math.max(1, MAX_RETRIES + 1);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      if (USE_RESPONSES_API) {
-        let conversationInput = toResponsesInput(messages);
-        const instructions = extractInstructions(messages);
-
-        if (!conversationInput.length) {
-          const fallbackContent = payload.messages[payload.messages.length - 1]?.content?.trim();
-          conversationInput = [
-            {
-              role: "user" as const,
-              content: fallbackContent && fallbackContent.length > 0
+      let conversationInput = baseInput;
+      if (!conversationInput.length) {
+        const fallbackContent = payload.messages[payload.messages.length - 1]?.content?.trim();
+        conversationInput = [
+          {
+            role: "user" as const,
+            content:
+              fallbackContent && fallbackContent.length > 0
                 ? fallbackContent
                 : "I need help with SAT math practice.",
-            },
-          ];
-        }
-
-        const responsesPayload: ResponseCreateParams = {
-          model: DEFAULT_MODEL,
-          input: conversationInput,
-          max_output_tokens: 512,
-        };
-
-        if (instructions) {
-          responsesPayload.instructions = instructions;
-        }
-
-        if (responsesSupportsTemperature(DEFAULT_MODEL)) {
-          responsesPayload.temperature = temperature;
-        }
-
-        const response = await client.responses.create(responsesPayload);
-
-        const responseText = response.output_text?.trim();
-        if (!responseText) {
-          throw new Error("Coach returned an empty response");
-        }
-
-        const finishReason = null;
-
-        return {
-          message: responseText,
-          finishReason,
-          usage: formatUsage({
-            input_tokens: response.usage?.input_tokens,
-            output_tokens: response.usage?.output_tokens,
-            total_tokens: response.usage?.total_tokens,
-          }),
-          attempts: attempt,
-          latencyMs: Date.now() - start,
-        };
+          },
+        ];
       }
 
-      const completion = await client.chat.completions.create({
+      const responsesPayload: ResponseCreateParamsNonStreaming = {
         model: DEFAULT_MODEL,
-        temperature,
-        max_tokens: 512,
-        messages,
-      });
+        input: conversationInput,
+        instructions,
+        max_output_tokens: 512,
+        text: {
+          format: {
+            type: "text",
+          },
+        },
+      };
 
-      const choice = completion.choices?.[0];
-      const responseText = choice?.message?.content?.trim();
+      const response = await fetchCompletedResponse(client, responsesPayload);
 
+      const responseText = extractResponseText(response);
       if (!responseText) {
         throw new Error("Coach returned an empty response");
       }
 
       return {
         message: responseText,
-        finishReason: choice?.finish_reason ?? null,
+        finishReason: null,
         usage: formatUsage({
-          prompt_tokens: completion.usage?.prompt_tokens ?? null,
-          completion_tokens: completion.usage?.completion_tokens ?? null,
-          total_tokens: completion.usage?.total_tokens ?? null,
+          input_tokens: response.usage?.input_tokens,
+          output_tokens: response.usage?.output_tokens,
+          total_tokens: response.usage?.total_tokens,
         }),
         attempts: attempt,
         latencyMs: Date.now() - start,

@@ -3,6 +3,18 @@
   "globalDependencies": [
     "**/.env.*local"
   ],
+  "globalEnv": [
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "DATABASE_URL",
+    "OPENAI_API_KEY",
+    "OPENAI_MODEL",
+    "COACH_MAX_RETRIES",
+    "COACH_CACHE_TTL",
+    "COACH_RATE_LIMIT",
+    "COACH_RATE_WINDOW",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN"
+  ],
   "tasks": {
     "build": {
       "dependsOn": [
