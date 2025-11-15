@@ -78,10 +78,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
+    const [{ error }, response] = await Promise.all([supabase.auth.signOut(), fetch("/api/auth/signout", { method: "POST" })]);
+
     if (error) {
       throw error;
     }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      const message = body?.error ?? "Unable to sign out";
+      throw new Error(message);
+    }
+
     setUser(null);
   };
 
