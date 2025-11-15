@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { StatsQuerySchema } from '@/lib/validation';
 
+export const runtime = 'nodejs';
+
 type AttemptWithQuestion = {
   id: string;
   correct: boolean;

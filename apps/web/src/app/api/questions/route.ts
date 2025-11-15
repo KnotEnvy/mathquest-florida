@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { QuestionsQuerySchema } from '@/lib/validation';
 
+export const runtime = 'nodejs';
+
 type QuestionRecord = {
   id: string;
   difficulty: number;
