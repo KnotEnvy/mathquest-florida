@@ -1,21 +1,50 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 
+function resolveHomeUrl() {
+  if (typeof window === "undefined") {
+    return process.env.NEXT_PUBLIC_APP_URL ?? "/";
+  }
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (envUrl && /^https?:\/\//.test(envUrl)) {
+    return envUrl;
+  }
+  if (envUrl) {
+    const base = window.location.origin.replace(/\/$/, "");
+    const path = envUrl.startsWith("/") ? envUrl : `/${envUrl}`;
+    return `${base}${path}`;
+  }
+  return window.location.origin;
+}
+
 export function Navigation() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutMessage, setSignOutMessage] = useState<string | null>(null);
 
   const handleSignOut = async () => {
+    setSigningOut(true);
+    setSignOutMessage("Signing you out...");
     try {
       await signOut();
-      router.replace("/");
+      setSignOutMessage("Signed out. Redirecting to home...");
+      const destination = resolveHomeUrl();
+      if (typeof window === "undefined") {
+        router.replace("/");
+      } else {
+        window.location.href = destination;
+      }
     } catch (error) {
       console.error("Sign-out failed", error);
+      setSignOutMessage("Sign-out failed. Please try again.");
+      setSigningOut(false);
     }
   };
 
@@ -66,10 +95,23 @@ export function Navigation() {
                 <span className="hidden text-sm text-gray-700 sm:inline">
                   {user.user_metadata?.display_name || user.email?.split("@")[0]}
                 </span>
-                <Button onClick={handleSignOut} variant="outline" size="sm" className="flex items-center gap-2">
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                  Sign Out
-                </Button>
+                <div className="flex flex-col items-start">
+                  <Button
+                    onClick={handleSignOut}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    disabled={signingOut}
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    {signingOut ? "Signing Out..." : "Sign Out"}
+                  </Button>
+                  {signOutMessage && (
+                    <span className="mt-1 text-xs text-gray-500" role="status" aria-live="polite">
+                      {signOutMessage}
+                    </span>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex items-center space-x-2">

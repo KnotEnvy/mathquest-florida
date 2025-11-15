@@ -48,21 +48,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parentEmail = metadata.parent_email ?? null;
         const role = metadata.role || "student";
 
-        const { error } = await supabase.from("profiles").upsert({
-          id: session.user.id,
-          email: session.user.email,
-          display_name: displayName,
-          target_exam: targetExam,
-          parent_email: parentEmail,
-          settings: {
-            ...(metadata.settings ?? {}),
-            role,
-          },
-          updated_at: new Date().toISOString(),
-        });
+        try {
+          const response = await fetch("/api/profile/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              displayName,
+              targetExam,
+              parentEmail,
+              role,
+              settings: metadata.settings ?? {},
+            }),
+          });
 
-        if (error) {
-          console.error("Error syncing profile:", error);
+          if (!response.ok) {
+            console.error("Error syncing profile:", await response.json());
+          }
+        } catch (syncError) {
+          console.error("Error syncing profile:", syncError);
         }
       }
 
