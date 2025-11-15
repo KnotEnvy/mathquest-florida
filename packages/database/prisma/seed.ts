@@ -1177,7 +1177,15 @@ async function main() {
       tags: ['rates', 'average-speed', 'word-problems'],
     },
 
-
+    {
+      content: {
+        type: 'multiple-choice',
+        question:
+          'A jacket costs $80. A sale takes 15% off and then a coupon removes an additional 10% from the discounted price. What is the final price of the jacket?',
+        choices: ['$60.00', '$61.20', '$64.80', '$68.00'],
+        correctAnswer: '$61.20',
+        explanation: 'Sale price is 80 × 0.85 = 68, then 68 × 0.90 = 61.20.',
+      },
       domain: 'Problem Solving & Data Analysis',
       subdomain: 'Percentages',
       difficulty: 0.6,
@@ -1251,7 +1259,14 @@ async function main() {
       tags: ['percentages', 'algebra', 'data-analysis'],
     },
 
-
+    {
+      content: {
+        type: 'multiple-choice',
+        question: 'A dataset has a first quartile of 22 and a third quartile of 34. What is its interquartile range (IQR)?',
+        choices: ['11', '12', '13', '56'],
+        correctAnswer: '12',
+        explanation: 'IQR is Q3 - Q1 = 34 - 22 = 12.',
+      },
       domain: 'Problem Solving & Data Analysis',
       subdomain: 'Statistics',
       difficulty: 0.5,
@@ -1271,7 +1286,15 @@ async function main() {
       tags: ['sales-tax', 'percentages', 'data-analysis'],
     },
 
-
+    {
+      content: {
+        type: 'multiple-choice',
+        question:
+          'A fair six-sided die is rolled three times. What is the probability that no six appears in any of the rolls?',
+        choices: ['(5/6)^3', '(1/6)^3', '1 - (5/6)^3', '(5/6)^2'],
+        correctAnswer: '(5/6)^3',
+        explanation: 'Each roll avoids a six with probability 5/6, so multiply three times.',
+      },
       domain: 'Problem Solving & Data Analysis',
       subdomain: 'Probability',
       difficulty: 0.9,
