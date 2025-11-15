@@ -17,6 +17,14 @@ const EXAMS = [
   { value: "PERT", label: "PERT" },
 ];
 
+function buildRedirectUrl() {
+  const fallback = typeof window !== 'undefined' ? window.location.origin : undefined;
+  const configuredBase = process.env.NEXT_PUBLIC_APP_URL || '';
+  const base = configuredBase && !configuredBase.includes('localhost') ? configuredBase : fallback || configuredBase;
+  const normalized = base?.endsWith('/') ? base.slice(0, -1) : base;
+  return normalized ? `${normalized}/practice` : '/practice';
+}
+
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -54,7 +62,7 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/practice`,
+        emailRedirectTo: buildRedirectUrl(),
         data: metadata,
       },
     });
@@ -74,7 +82,7 @@ export default function RegisterPage() {
     const { error: magicError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/practice`,
+        emailRedirectTo: buildRedirectUrl(),
         data: metadata,
       },
     });
@@ -273,11 +281,6 @@ export default function RegisterPage() {
                 <li>✓ Invite parents or tutors anytime—multi-user households share progress automatically.</li>
                 <li>✓ Need help? Use the in-app coach or email support@mathquest.app.</li>
               </ul>
-            </div>
-            <div className="rounded-xl border border-purple-200 bg-white/80 p-4 text-sm text-purple-800 shadow-sm">
-              <p>
-                Supabase powers authentication. Make sure the project URL and anon key are set in `.env.local` before testing multi-user flows locally.
-              </p>
             </div>
           </aside>
         </div>
