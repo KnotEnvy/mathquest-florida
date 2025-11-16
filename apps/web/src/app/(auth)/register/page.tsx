@@ -18,11 +18,11 @@ const EXAMS = [
 ];
 
 function buildRedirectUrl() {
-  const fallback = typeof window !== 'undefined' ? window.location.origin : undefined;
-  const configuredBase = process.env.NEXT_PUBLIC_APP_URL || '';
-  const base = configuredBase && !configuredBase.includes('localhost') ? configuredBase : fallback || configuredBase;
-  const normalized = base?.endsWith('/') ? base.slice(0, -1) : base;
-  return normalized ? `${normalized}/practice` : '/practice';
+  const fallback = typeof window !== "undefined" ? window.location.origin : undefined;
+  const configuredBase = process.env.NEXT_PUBLIC_APP_URL || "";
+  const base = configuredBase && !configuredBase.includes("localhost") ? configuredBase : fallback || configuredBase;
+  const normalized = base?.endsWith("/") ? base.slice(0, -1) : base;
+  return normalized || "/";
 }
 
 export default function RegisterPage() {

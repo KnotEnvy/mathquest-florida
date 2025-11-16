@@ -48,7 +48,7 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/practice");
+      router.push("/");
     }
     setLoading(false);
   };
@@ -61,7 +61,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/practice`,
+        emailRedirectTo: window.location.origin,
       },
     });
 
