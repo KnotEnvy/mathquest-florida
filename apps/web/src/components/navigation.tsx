@@ -7,22 +7,6 @@ import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 
-function resolveHomeUrl() {
-  if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_APP_URL ?? "/";
-  }
-  const envUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (envUrl && /^https?:\/\//.test(envUrl)) {
-    return envUrl;
-  }
-  if (envUrl) {
-    const base = window.location.origin.replace(/\/$/, "");
-    const path = envUrl.startsWith("/") ? envUrl : `/${envUrl}`;
-    return `${base}${path}`;
-  }
-  return window.location.origin;
-}
-
 export function Navigation() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
@@ -34,13 +18,8 @@ export function Navigation() {
     setSignOutMessage("Signing you out...");
     try {
       await signOut();
-      setSignOutMessage("Signed out. Redirecting to home...");
-      const destination = resolveHomeUrl();
-      if (typeof window === "undefined") {
-        router.replace("/");
-      } else {
-        window.location.href = destination;
-      }
+      setSignOutMessage("Signed out. Redirecting...");
+      router.replace("/");
     } catch (error) {
       console.error("Sign-out failed", error);
       setSignOutMessage("Sign-out failed. Please try again.");
