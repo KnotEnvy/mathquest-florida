@@ -40,6 +40,14 @@ function selectClosestByAbility<T extends QuestionRecord>(
 
 export async function GET(request: Request) {
   try {
+    if (process.env.NODE_ENV !== 'production' ? false : true) {
+      const raw = process.env.DATABASE_URL ?? '';
+      const prefix = raw.slice(0, 30);
+      const suffix = raw.slice(-10);
+      const charCodes = Array.from(prefix).map((char) => char.charCodeAt(0));
+      console.log('[env-check] DATABASE_URL prefix chars:', charCodes, 'suffix:', suffix);
+    }
+
     // Validate query parameters
     const { searchParams } = new URL(request.url);
     const parsed = QuestionsQuerySchema.safeParse({
