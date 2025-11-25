@@ -132,7 +132,7 @@ export function CoachPanel({ question, attemptSummary, disabled }: CoachPanelPro
           <div>
             <p className="text-sm font-semibold text-yellow-900">Coming Soon!</p>
             <p className="text-xs text-yellow-700">
-              We're fine-tuning the AI Coach. Stay tuned for an amazing learning experience!
+              We&apos;re fine-tuning the AI Coach. Stay tuned for an amazing learning experience!
             </p>
           </div>
         </div>
