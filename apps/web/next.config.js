@@ -3,10 +3,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  transpilePackages: ['@mathquest/database'],
   experimental: {
     // Enable experimental features as needed
   },
 };
-
-module.exports = nextConfig;
