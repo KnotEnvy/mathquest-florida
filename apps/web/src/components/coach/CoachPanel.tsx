@@ -125,6 +125,19 @@ export function CoachPanel({ question, attemptSummary, disabled }: CoachPanelPro
         <span className="text-xs uppercase tracking-wide text-gray-400">Beta</span>
       </header>
 
+      {/* Coming Soon Banner */}
+      <div className="mb-4 rounded-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50 p-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-yellow-600" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-yellow-900">Coming Soon!</p>
+            <p className="text-xs text-yellow-700">
+              We're fine-tuning the AI Coach. Stay tuned for an amazing learning experience!
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="mb-4 grid gap-2 sm:grid-cols-2">
         {MODE_OPTIONS.map((option) => (
           <Button
@@ -134,7 +147,7 @@ export function CoachPanel({ question, attemptSummary, disabled }: CoachPanelPro
             variant={mode === option.id ? 'default' : 'outline'}
             aria-pressed={mode === option.id}
             onClick={() => setMode(option.id)}
-            disabled={isLoading}
+            disabled={true}
             className={cn('justify-start', mode === option.id && 'shadow-sm')}
           >
             <div className="flex flex-col text-left">
@@ -152,7 +165,7 @@ export function CoachPanel({ question, attemptSummary, disabled }: CoachPanelPro
       >
         {messages.length === 0 && (
           <p className="text-sm text-gray-500">
-            Ask for a hint, explanation, pep talk, or an extra challenge about this question.
+            The AI Coach will help you with hints, explanations, and encouragement. Check back soon!
           </p>
         )}
         {messages.map((message) => (
@@ -186,12 +199,12 @@ export function CoachPanel({ question, attemptSummary, disabled }: CoachPanelPro
         <textarea
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Coach, how do I get started?"
-          disabled={disabled}
+          placeholder="Coming soon - Stay tuned!"
+          disabled={true}
           rows={2}
           className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-inner focus:border-magenta-primary focus:outline-none focus:ring-2 focus:ring-magenta-primary/40 disabled:opacity-60"
         />
-        <Button onClick={handleSend} disabled={isSendDisabled} className="shrink-0">
+        <Button onClick={handleSend} disabled={true} className="shrink-0">
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
           <span className="sr-only">Send</span>
         </Button>
