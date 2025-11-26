@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { AttemptPostSchema } from '@/lib/validation';
 
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
